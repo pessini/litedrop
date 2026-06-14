@@ -17,7 +17,7 @@ litedrop/                # npm workspaces — one root `npm install`
 │   ├── backend/         # Hono + Drizzle API + SSR public pages (Node 22.18+, SQLite)
 │   └── dashboard/       # Vue 3 dashboard SPA (own shares + password login)
 ├── packages/
-│   ├── core/            # @litedrop/core: reusable library surface
+│   ├── core/            # @pessini/litedrop-core: reusable library surface
 │   └── api-types/       # @litedrop/api-types: shared response/request types
 └── cli/                 # Node/TS CLI (commander)
 ```

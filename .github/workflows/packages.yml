@@ -21,10 +21,10 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
           registry-url: https://npm.pkg.github.com
-          scope: "@litedrop"
+          scope: "@pessini"
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
-      - run: npm publish -w @litedrop/core
+      - run: npm publish -w @pessini/litedrop-core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
