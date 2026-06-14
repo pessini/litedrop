@@ -1,1 +1,1 @@
-export * from "@litedrop/backend";
+export * from "./lib.ts";
