@@ -688,11 +688,13 @@ tbody tr:hover td {
   border-radius: 999px;
   font-size: 0.875rem;
   font-family: "JetBrains Mono", monospace;
-  box-shadow: 0 8px 30px -12px color-mix(in oklab, var(--primary) 60%, transparent);
+  box-shadow: 0 8px 30px -12px
+    color-mix(in oklab, var(--primary) 60%, transparent);
   z-index: 100;
 }
 :root.dark .toast {
-  box-shadow: 0 8px 30px -6px color-mix(in oklab, var(--primary) 50%, transparent);
+  box-shadow: 0 8px 30px -6px
+    color-mix(in oklab, var(--primary) 50%, transparent);
 }
 
 /* ── responsive ────────────────────────────────── */

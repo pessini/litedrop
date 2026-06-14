@@ -124,9 +124,7 @@
       "indexes": {
         "shares_slug_unique": {
           "name": "shares_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },

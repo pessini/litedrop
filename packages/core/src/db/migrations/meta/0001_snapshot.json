@@ -39,10 +39,7 @@
       "indexes": {
         "abuse_reports_share_reporter_uq": {
           "name": "abuse_reports_share_reporter_uq",
-          "columns": [
-            "share_id",
-            "reporter_ip"
-          ],
+          "columns": ["share_id", "reporter_ip"],
           "isUnique": true
         }
       },
@@ -51,12 +48,8 @@
           "name": "abuse_reports_share_id_shares_id_fk",
           "tableFrom": "abuse_reports",
           "tableTo": "shares",
-          "columnsFrom": [
-            "share_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["share_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -185,9 +178,7 @@
       "indexes": {
         "shares_slug_unique": {
           "name": "shares_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },

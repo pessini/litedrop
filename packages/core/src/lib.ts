@@ -4,86 +4,83 @@
 // domain logic + storage providers. A downstream depends on this package,
 // supplies its own store/resolver/hooks, and composes its own app.
 
-// --- Ports & domain types ---
-export {
-  type NewShare,
-  type Share,
-  type ShareKind,
-  type ShareStatus,
-  type ShareStore,
-  isServable,
-  statusOf,
-} from "./ports/share-store.ts";
-export type { AppEnv, Identity, OwnerKey } from "./types.ts";
-
 // --- Identity seam ---
 export {
+  clearSessionCookie,
   type ResolveOwner,
   requireOwner,
   SESSION_COOKIE,
   setSessionCookie,
-  clearSessionCookie,
 } from "./auth/identity.ts";
-
-// --- Serving hooks ---
-export {
-  type ServingHooks,
-  loadServable,
-} from "./public/serving-hooks.ts";
-
-// --- Composable routers ---
-export {
-  type PublicRouterDeps,
-  createPublicRouter,
-} from "./public/view.ts";
-export {
-  type ContentRouterDeps,
-  createContentRouter,
-} from "./public/content-origin.ts";
-export {
-  type ShareRouterDeps,
-  createShareRouter,
-} from "./shares/routes.ts";
-
-// --- Reusable domain logic (DB-free) ---
-export {
-  MAX_SIZE_BYTES,
-  MAX_UPLOAD_BODY_BYTES,
-  type ParsedControls,
-  type RawControls,
-  type ValidatedUpload,
-  parseControls,
-  parseExpires,
-  parseMaxViews,
-  UploadError,
-  validateUpload,
-} from "./shares/service.ts";
-export { generateSlug } from "./shares/slug.ts";
-export { hashPassword, verifyPassword } from "./shares/password.ts";
-export { renderMarkdown } from "./public/render.ts";
-export { htmlHostPage, pageShell, escapeHtml } from "./public/layout.ts";
+export { clientIp, clientIpFromHeaders } from "./lib/request.ts";
 export {
   appPageCsp,
   htmlHostCsp,
   spaCsp,
   userContentCsp,
 } from "./middleware/csp.ts";
-export { byIp, rateLimit, type RateLimitOptions } from "./middleware/ratelimit.ts";
-export { clientIp, clientIpFromHeaders } from "./lib/request.ts";
-
+export {
+  byIp,
+  type RateLimitOptions,
+  rateLimit,
+} from "./middleware/ratelimit.ts";
+// --- Ports & domain types ---
+export {
+  isServable,
+  type NewShare,
+  type Share,
+  type ShareKind,
+  type ShareStatus,
+  type ShareStore,
+  statusOf,
+} from "./ports/share-store.ts";
+export {
+  type ContentRouterDeps,
+  createContentRouter,
+} from "./public/content-origin.ts";
+export { escapeHtml, htmlHostPage, pageShell } from "./public/layout.ts";
+export { renderMarkdown } from "./public/render.ts";
+// --- Serving hooks ---
+export {
+  loadServable,
+  type ServingHooks,
+} from "./public/serving-hooks.ts";
 // --- Content tokens + origin config ---
 export {
   buildContentUrl,
   contentBaseUrl,
+  isContentOriginRequestHost,
   mintContentToken,
   originOf,
-  isContentOriginRequestHost,
-  publicOriginConfigErrors,
   type PublicOriginConfig,
+  publicOriginConfigErrors,
   SIGNING_SECRET,
   verifyContentToken,
 } from "./public/tokens.ts";
-
+// --- Composable routers ---
+export {
+  createPublicRouter,
+  type PublicRouterDeps,
+} from "./public/view.ts";
+export { hashPassword, verifyPassword } from "./shares/password.ts";
+export {
+  createShareRouter,
+  type ShareRouterDeps,
+} from "./shares/routes.ts";
+// --- Reusable domain logic (DB-free) ---
+export {
+  MAX_SIZE_BYTES,
+  MAX_UPLOAD_BODY_BYTES,
+  type ParsedControls,
+  parseControls,
+  parseExpires,
+  parseMaxViews,
+  type RawControls,
+  UploadError,
+  type ValidatedUpload,
+  validateUpload,
+} from "./shares/service.ts";
+export { generateSlug } from "./shares/slug.ts";
 // --- Storage ---
 export type {
   PutObject,
@@ -93,3 +90,4 @@ export type {
 } from "./storage/backend.ts";
 export { StorageConfigError } from "./storage/backend.ts";
 export { storage } from "./storage/index.ts";
+export type { AppEnv, Identity, OwnerKey } from "./types.ts";
