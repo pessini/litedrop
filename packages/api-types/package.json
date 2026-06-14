@@ -13,8 +13,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "openapi:gen": "openapi-typescript ../../backend/openapi.json -o src/schema.d.ts",
-    "openapi:check": "openapi-typescript ../../backend/openapi.json -o .openapi-check.d.ts && diff .openapi-check.d.ts src/schema.d.ts && rm -f .openapi-check.d.ts && echo 'schema.d.ts is in sync.'"
+    "openapi:gen": "openapi-typescript ../../apps/backend/openapi.json -o src/schema.d.ts",
+    "openapi:check": "openapi-typescript ../../apps/backend/openapi.json -o .openapi-check.d.ts && diff .openapi-check.d.ts src/schema.d.ts && rm -f .openapi-check.d.ts && echo 'schema.d.ts is in sync.'"
   },
   "devDependencies": {
     "openapi-typescript": "^7.13.0",

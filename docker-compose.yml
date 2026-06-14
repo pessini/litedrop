@@ -73,7 +73,7 @@ services:
       # Repo-root context: the image bundles the backend AND the built dashboard SPA
       # (one container serves everything on :8080).
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: apps/backend/Dockerfile
     environment:
       NODE_ENV: development
       PORT: "8080"
@@ -82,8 +82,8 @@ services:
       - "8080:8080"
     volumes:
       # SQLite database file and local blob storage survive container rebuilds.
-      - backenddata:/app/backend/.data
-      - backendstorage:/app/backend/.storage
+      - backenddata:/app/apps/backend/.data
+      - backendstorage:/app/apps/backend/.storage
 
 volumes:
   backenddata:

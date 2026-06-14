@@ -46,9 +46,9 @@ const EnvSchema = z.object({
   // separate-domain layer that contains a hypothetical sandbox escape.
   ALLOW_SAME_ORIGIN_CONTENT: EnvBool,
 
-  // Directory of the built dashboard SPA (dashboard/dist). If the directory
+  // Directory of the built dashboard SPA (apps/dashboard/dist). If the directory
   // exists the backend serves it (production: one process serves everything).
-  // Unset = auto-detect the monorepo path backend/../dashboard/dist; absent =
+  // Unset = auto-detect the monorepo path apps/backend/../dashboard/dist; absent =
   // API-only, as in dev where the Vite server proxies instead.
   DASHBOARD_DIST_DIR: z.string().optional(),
 

@@ -11,9 +11,9 @@
       "!**/dist",
       "!cli/src/version.ts",
       "!packages/api-types/src/schema.d.ts",
-      "!backend/src/db/migrations",
-      "!backend/src/db/migrations-sqlite",
-      "!backend/openapi.json",
+      "!apps/backend/src/db/migrations",
+      "!apps/backend/src/db/migrations-sqlite",
+      "!apps/backend/openapi.json",
       "!package-lock.json",
       "!**/*.vue"
     ]

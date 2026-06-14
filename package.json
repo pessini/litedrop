@@ -5,8 +5,7 @@
   "description": "Share markdown/HTML via a link. CLI-first. (npm-workspaces monorepo)",
   "workspaces": [
     "packages/*",
-    "backend",
-    "dashboard",
+    "apps/*",
     "cli"
   ],
   "scripts": {

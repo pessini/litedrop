@@ -64,15 +64,15 @@ If you already have a reverse proxy (nginx, Traefik, a platform load balancer),
 run just the app container:
 
 ```bash
-docker build -f backend/Dockerfile -t litedrop .
+docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -d -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
   -e APP_BASE_URL=https://drop.example.com \
   -e CONTENT_BASE_URL=https://content.drop.example.com \
   -e TRUST_PROXY_HEADERS=true \
-  -v litedrop-db:/app/backend/.data \
-  -v litedrop-blobs:/app/backend/.storage \
+  -v litedrop-db:/app/apps/backend/.data \
+  -v litedrop-blobs:/app/apps/backend/.storage \
   litedrop
 ```
 
@@ -86,12 +86,12 @@ cloud container platforms (Railway, Render, Fly.io, Cloud Run). Something else
 terminates TLS and forwards to the app; litedrop doesn't care what. Don't also
 run the deploy/ Caddy bundle — you only need the app container.
 
-1. Deploy the image built from `backend/Dockerfile` with the repo root as build
+1. Deploy the image built from `apps/backend/Dockerfile` with the repo root as build
    context.
 2. Set the environment: `ADMIN_PASSWORD`, `LITEDROP_TOKEN`,
    `TRUST_PROXY_HEADERS=true`, and `APP_BASE_URL=https://<your-domain>`.
 3. Route your domain to the container's port 8080.
-4. Mount a persistent volume at `/app/backend/.data` and `/app/backend/.storage`
+4. Mount a persistent volume at `/app/apps/backend/.data` and `/app/apps/backend/.storage`
    to keep the SQLite + local-disk defaults. No volume available (e.g. Cloud
    Run)? Use a cloud storage provider (`STORAGE_PROVIDER=r2|s3|azure` plus its
    credentials) and set `UNLOCK_COOKIE_SECRET` explicitly, since there's no disk
@@ -111,7 +111,7 @@ One requirement on the proxy: it must forward the original `Host` header
 npm install
 npm run build
 ADMIN_PASSWORD=change-me-please LITEDROP_TOKEN=$(openssl rand -hex 32) \
-  APP_BASE_URL=https://drop.example.com node backend/dist/index.js
+  APP_BASE_URL=https://drop.example.com node apps/backend/dist/index.js
 ```
 
 Everything is served on port 8080 (override with `PORT`). Put a TLS proxy in

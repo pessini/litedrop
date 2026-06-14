@@ -13,10 +13,12 @@ operational story — see the [self-hosting guide](docs/SELF_HOSTING.md).
 
 ```
 litedrop/                # npm workspaces — one root `npm install`
+├── apps/
+│   ├── backend/         # Hono + Drizzle API + SSR public pages (Node 22.18+, SQLite)
+│   └── dashboard/       # Vue 3 dashboard SPA (own shares + password login)
 ├── packages/
+│   ├── core/            # @litedrop/core: reusable library surface
 │   └── api-types/       # @litedrop/api-types: shared response/request types
-├── backend/             # Hono + Drizzle API + SSR public pages (Node 22.18+, SQLite)
-├── dashboard/           # Vue 3 dashboard SPA (own shares + password login)
 └── cli/                 # Node/TS CLI (commander)
 ```
 
@@ -39,26 +41,26 @@ npm install
 ADMIN_PASSWORD=change-me-please npm run -w @litedrop/backend dev   # http://localhost:8080
 ```
 
-The backend defaults to an embedded SQLite database (`backend/.data/litedrop.db`)
-and local-disk storage (`backend/.storage`). For production, build everything
+The backend defaults to an embedded SQLite database (`apps/backend/.data/litedrop.db`)
+and local-disk storage (`apps/backend/.storage`). For production, build everything
 and run the one process — it serves the API, the public share pages, and the
-dashboard SPA (auto-detecting `dashboard/dist`):
+dashboard SPA (auto-detecting `apps/dashboard/dist`):
 
 ```bash
 npm run build
 ADMIN_PASSWORD=… APP_BASE_URL=https://drop.example.com \
-  node backend/dist/index.js          # everything on :8080 — put a TLS proxy in front
+  node apps/backend/dist/index.js     # everything on :8080 — put a TLS proxy in front
 ```
 
 Or as a single container (SQLite + blobs on named volumes):
 
 ```bash
-docker build -f backend/Dockerfile -t litedrop .
+docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
   -e APP_BASE_URL=https://drop.example.com \
-  -v litedrop-db:/app/backend/.data -v litedrop-blobs:/app/backend/.storage litedrop
+  -v litedrop-db:/app/apps/backend/.data -v litedrop-blobs:/app/apps/backend/.storage litedrop
 ```
 
 Full instructions, configuration reference, and known limitations:

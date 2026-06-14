@@ -7,15 +7,15 @@ import { env } from "./env.ts";
 import { spaCsp } from "./middleware/csp.ts";
 import type { AppEnv } from "./types.ts";
 
-// Serve the built dashboard SPA (dashboard/dist) from the backend, so production is
+// Serve the built dashboard SPA (apps/dashboard/dist) from the backend, so production is
 // one process: API + SSR public pages + the SPA, all on the app origin. Mounted
 // LAST in the app composition — every real route wins first; what's left is
 // either a static asset or a client-routed page that gets index.html.
 //
-// In dev this stays unmounted (dashboard/dist usually absent or stale) and the Vite
+// In dev this stays unmounted (apps/dashboard/dist usually absent or stale) and the Vite
 // dev server proxies to the backend instead — same-origin either way.
 
-// DASHBOARD_DIST_DIR wins; otherwise the monorepo layout (backend/../dashboard/dist),
+// DASHBOARD_DIST_DIR wins; otherwise the monorepo layout (apps/backend/../dashboard/dist),
 // resolved from this file so it works from src/ (tsx) and dist/ alike.
 export function resolveSpaDir(): string | null {
   const backendRoot = fileURLToPath(new URL("..", import.meta.url));

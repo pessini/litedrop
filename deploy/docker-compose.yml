@@ -17,7 +17,7 @@ services:
   litedrop:
     build:
       context: ..
-      dockerfile: backend/Dockerfile
+      dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
     environment:
       APP_BASE_URL: https://${DOMAIN:?set DOMAIN in deploy/.env}
@@ -30,8 +30,8 @@ services:
       # services set DATABASE_URL / STORAGE_PROVIDER here instead — see
       # the repo root .env.example for the full list.
     volumes:
-      - litedrop-db:/app/backend/.data
-      - litedrop-blobs:/app/backend/.storage
+      - litedrop-db:/app/apps/backend/.data
+      - litedrop-blobs:/app/apps/backend/.storage
     expose:
       - "8080"
 
