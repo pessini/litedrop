@@ -159,8 +159,7 @@ the share URL so it composes in shells/agents: `URL=$(litedrop push report.html)
 | `npm run dev` | Hot-reloading dev server (`node --watch`, native TS) |
 | `npm run build` | Compile TS → `dist/` |
 | `npm run typecheck` | Type-check without emitting |
-| `npm run db:generate` | Generate a SQLite migration from schema changes |
-| `npm run db:push` | Push schema directly (dev convenience) |
+| `npm run db:migrate` | Apply committed SQLite migrations |
 
 SQLite migrates itself at boot — no migrate step to run in production.
 

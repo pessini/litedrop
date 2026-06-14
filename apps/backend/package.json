@@ -16,8 +16,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
+    "db:migrate": "node src/db/run-migrations.ts",
     "openapi:emit": "node scripts/emit-openapi.ts",
     "openapi:check": "node scripts/emit-openapi.ts --check"
   },
@@ -35,7 +34,6 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.13.2",
     "@types/sanitize-html": "^2.16.1",
-    "drizzle-kit": "^0.31.10",
     "typescript": "^6.0.3"
   }
 }
