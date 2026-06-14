@@ -1,0 +1,53 @@
+name: CLI Release
+
+# Build standalone CLI binaries (Node not required on the user's machine) and
+# attach them to a GitHub Release. Triggered by pushing a tag like `cli-v0.1.0`.
+# Bun cross-compiles every target from a single Linux runner.
+on:
+  push:
+    tags: ["cli-v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build/release (e.g. cli-v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # Installs commander (the CLI's only runtime dep) so bun can bundle it.
+      - run: npm ci
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Cross-compile the full target matrix into cli/binaries/.
+      - run: npm run -w @litedrop/cli compile
+
+      # Checksums so the install script (and users) can verify downloads.
+      - name: Generate checksums
+        working-directory: cli/binaries
+        run: sha256sum litedrop-* > SHA256SUMS
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          fail_on_unmatched_files: true
+          files: |
+            cli/binaries/litedrop-*
+            cli/binaries/SHA256SUMS

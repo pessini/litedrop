@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Five independent jobs — lint (Biome, repo-wide), api-types (shared contract),
+# backend (Hono/TS), dashboard (Vue SPA), cli (Node/TS) — plus OpenAPI contract drift
+# checks that keep the hand-authored spec, the committed openapi.json, and the
+# generated client types in lockstep. npm workspaces: each job runs one root
+# `npm ci`, then its workspace's scripts via `npm run -w <name>`.
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      # Format + lint the whole repo (config in biome.json).
+      - run: npx biome ci .
+
+  api-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      # Regenerate @litedrop/api-types from backend/openapi.json and fail on drift
+      # (run `npm run -w @litedrop/api-types openapi:gen`). The compile-time
+      # contract bridge in contract-check.ts is enforced by typecheck below.
+      - run: npm run -w @litedrop/api-types openapi:check
+      - run: npm run -w @litedrop/api-types typecheck
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run -w @litedrop/backend test
+      - run: npm run -w @litedrop/backend typecheck
+      - run: npm run -w @litedrop/backend build
+      # Fails if openapi.json drifts from src/openapi.ts (run `npm run -w @litedrop/backend openapi:emit`).
+      - run: npm run -w @litedrop/backend openapi:check
+
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run -w @litedrop/dashboard test
+      - run: npm run -w @litedrop/dashboard typecheck
+      - run: npm run -w @litedrop/dashboard build
+
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run -w @litedrop/cli test
+      - run: npm run -w @litedrop/cli typecheck
+      - run: npm run -w @litedrop/cli build
