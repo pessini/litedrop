@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -36,6 +36,22 @@ let baseUrl = "";
 let tmpHome = "";
 const shares: MockShare[] = [];
 let counter = 0;
+
+function testConfigPath(): string {
+  if (process.platform === "darwin") {
+    return join(
+      tmpHome,
+      "Library",
+      "Application Support",
+      "litedrop",
+      "config.json",
+    );
+  }
+  if (process.platform === "win32") {
+    return join(tmpHome, "AppData", "Roaming", "litedrop", "config.json");
+  }
+  return join(tmpHome, "litedrop", "config.json");
+}
 
 function authed(auth: string | undefined): boolean {
   return auth === `Bearer ${GOOD_KEY}`;
@@ -188,7 +204,7 @@ test("login validates against LITEDROP_API_URL and persists; logout forgets", as
   assert.equal(login.code, 0);
   assert.match(login.stderr, /Logged in/);
 
-  const cfgPath = join(tmpHome, "litedrop", "config.json");
+  const cfgPath = testConfigPath();
   const saved = JSON.parse(readFileSync(cfgPath, "utf8")) as {
     api_key?: string;
   };
@@ -290,6 +306,7 @@ test("a rejected key is an auth error (exit 3)", async () => {
 });
 
 test("a missing key is an auth error before any request (exit 3)", async () => {
+  rmSync(dirname(testConfigPath()), { recursive: true, force: true });
   const file = join(tmpHome, "note4.md");
   await import("node:fs/promises").then((fs) => fs.writeFile(file, "x"));
 
