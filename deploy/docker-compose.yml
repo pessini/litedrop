@@ -1,0 +1,56 @@
+# Production single-VPS deployment: litedrop + Caddy (automatic HTTPS).
+#
+#   cd deploy
+#   cp .env.example .env   # set DOMAIN + ADMIN_PASSWORD, point DNS at this box
+#   docker compose up -d --build
+#
+# Caddy obtains/renews Let's Encrypt certificates for both hostnames and
+# proxies them to the app. The app serves everything (API, share pages,
+# dashboard) from one process; SQLite + blobs persist on named volumes.
+#
+# CONTENT_DOMAIN defaults to content.$DOMAIN — add a second DNS record for it
+# (the isolated origin that renders user HTML). To skip the second hostname
+# entirely, set ALLOW_SAME_ORIGIN_CONTENT=true in .env, leave CONTENT_BASE_URL
+# off the app below, and drop {$CONTENT_DOMAIN} from the Caddyfile.
+
+services:
+  litedrop:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_BASE_URL: https://${DOMAIN:?set DOMAIN in deploy/.env}
+      CONTENT_BASE_URL: https://${CONTENT_DOMAIN:-content.${DOMAIN}}
+      TRUST_PROXY_HEADERS: "true"
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in deploy/.env}
+      # Optional: enables CLI/agent access (blank = dashboard only).
+      LITEDROP_TOKEN: ${LITEDROP_TOKEN:-}
+      # SQLite + local-disk blobs by default (volumes below). For managed
+      # services set DATABASE_URL / STORAGE_PROVIDER here instead — see
+      # the repo root .env.example for the full list.
+    volumes:
+      - litedrop-db:/app/backend/.data
+      - litedrop-blobs:/app/backend/.storage
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CONTENT_DOMAIN: ${CONTENT_DOMAIN:-content.${DOMAIN}}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  litedrop-db:
+  litedrop-blobs:
+  caddy-data:
+  caddy-config:

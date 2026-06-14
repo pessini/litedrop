@@ -1,0 +1,13 @@
+# Keep the root build context lean (backend/Dockerfile builds from repo root).
+.git
+.devcontainer
+.run
+docs
+**/node_modules
+**/dist
+**/.data
+**/.storage
+**/.env
+**/*.log
+**/*.tsbuildinfo
+cli/binaries

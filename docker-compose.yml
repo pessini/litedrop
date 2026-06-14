@@ -1,0 +1,101 @@
+# Local dev stack for litedrop.
+# `docker compose up` brings up the backend on its embedded SQLite database —
+# no DB container; data persists on named volumes. The profile-gated services
+# below provide storage emulators for exercising the non-local providers.
+
+services:
+  # S3-compatible storage for exercising the S3-family providers locally
+  # (STORAGE_PROVIDER=s3 with S3_ENDPOINT=http://minio:9000, or r2 with
+  # R2_ENDPOINT). Profile-gated: `docker compose --profile r2 up -d`.
+  # The backend reaches it on the shared network as http://minio:9000.
+  minio:
+    image: minio/minio
+    profiles: ["r2"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: litedrop
+      MINIO_ROOT_PASSWORD: litedrop-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  # One-shot: wait for MinIO, then create the bucket. Exits 0 when done.
+  createbuckets:
+    image: minio/mc
+    profiles: ["r2"]
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 litedrop litedrop-secret; do sleep 1; done;
+      mc mb --ignore-existing local/litedrop;
+      echo 'bucket ready';
+      "
+
+  # Azure Blob emulator for exercising the azure provider locally
+  # (STORAGE_PROVIDER=azure). Profile-gated: `docker compose --profile azure up -d`.
+  # The backend reaches it on the shared network at http://azurite:10000.
+  # Azurite serves the well-known dev account "devstoreaccount1" (account name
+  # lives in the URL PATH, not the host — see AZURE_BLOB_ENDPOINT below).
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    profiles: ["azure"]
+    # --skipApiVersionCheck: accept the newer x-ms-version the azure-cli helper
+    # sends (Azurite otherwise 400s on versions it doesn't recognise). The
+    # backend's own provider pins a supported version and needs no flag.
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck -l /data
+    ports:
+      - "10000:10000"
+    volumes:
+      - azuritedata:/data
+
+  # One-shot: wait for Azurite, then create the container. Exits 0 when done.
+  # AZURITE_ACCOUNTS pins the same account/key Azurite uses by default so the
+  # connection string is stable.
+  createcontainer:
+    image: mcr.microsoft.com/azure-cli
+    profiles: ["azure"]
+    depends_on:
+      - azurite
+    environment:
+      # Default Azurite account + well-known key (public, dev-only).
+      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+    entrypoint: >
+      /bin/sh -c "
+      until az storage container create --name litedrop >/dev/null 2>&1; do sleep 1; done;
+      echo 'container ready';
+      "
+
+  backend:
+    build:
+      # Repo-root context: the image bundles the backend AND the built dashboard SPA
+      # (one container serves everything on :8080).
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: "8080"
+      APP_BASE_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      # SQLite database file and local blob storage survive container rebuilds.
+      - backenddata:/app/backend/.data
+      - backendstorage:/app/backend/.storage
+
+volumes:
+  backenddata:
+  backendstorage:
+  miniodata:
+  azuritedata:
+
+# Shared with the devcontainer (created by its initializeCommand) so the
+# devcontainer can reach these services by name. Marked external: Compose
+# attaches to it but never creates/owns it, avoiding label conflicts.
+# Running Compose OUTSIDE the devcontainer? First: docker network create litedrop_net
+networks:
+  default:
+    name: litedrop_net
+    external: true

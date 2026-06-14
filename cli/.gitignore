@@ -1,0 +1,5 @@
+dist/
+# Generated from package.json by scripts/gen-version.mjs (pre* npm scripts).
+src/version.ts
+# Compiled standalone binaries (scripts/build-binaries.sh).
+binaries/

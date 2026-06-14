@@ -1,0 +1,738 @@
+/* litedrop dashboard — design system
+   Shared between core and managed dashboards; keep the two copies in sync.
+   Light: stone-white, practical for data-dense work.
+   Dark: deep-space navy matching the marketing site, with brand blue
+         (#2496ed / hsl 206 85% 54%) as --primary and a cyan edge as --accent.
+   Fonts (Sora + JetBrains Mono) are loaded from index.html. */
+
+:root {
+  --background: hsl(240 5% 98%);
+  --foreground: hsl(240 6% 12%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 6% 12%);
+  --primary: hsl(206 85% 45%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(240 5% 96%);
+  --secondary-foreground: hsl(240 6% 12%);
+  --muted: hsl(240 5% 96%);
+  --muted-foreground: hsl(240 4% 46%);
+  --accent-token: hsl(240 5% 93%);
+  --accent-foreground: hsl(240 6% 12%);
+  --accent-glow: hsl(187 90% 55%);
+  --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.527 0.154 150.069);
+  --success-bg: oklch(0.962 0.044 156.743);
+  --warning: oklch(0.555 0.163 48.998);
+  --warning-bg: oklch(0.962 0.059 95.617);
+  --border: hsl(240 5% 90%);
+  --input: hsl(240 5% 90%);
+  --ring: hsl(206 85% 45%);
+  --radius: 0.625rem;
+  --shadow: 0 1px 2px 0 oklch(0 0 0 / 0.04);
+  --topbar-blur: blur(12px);
+
+  --bg: var(--background);
+  --surface: var(--card);
+  --surface-2: var(--muted);
+  --text: var(--foreground);
+  --text-dim: var(--muted-foreground);
+  --accent: var(--primary);
+  --accent-text: var(--primary-foreground);
+  --danger: var(--destructive);
+  --ok: var(--success);
+  --warn: var(--warning);
+
+  color-scheme: light;
+}
+
+:root.dark {
+  /* Deep-space navy — same palette as the marketing site. */
+  --background: hsl(222 47% 5%);
+  --foreground: hsl(214 30% 92%);
+  --card: hsl(221 40% 8%);
+  --card-foreground: hsl(214 30% 92%);
+  --primary: hsl(206 85% 54%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(220 32% 12%);
+  --secondary-foreground: hsl(214 30% 92%);
+  --muted: hsl(220 32% 12%);
+  --muted-foreground: hsl(217 16% 62%);
+  --accent-token: hsl(219 35% 14%);
+  --accent-foreground: hsl(214 30% 92%);
+  --accent-glow: hsl(187 90% 55%);
+  --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.696 0.17 162.48);
+  --success-bg: oklch(0.18 0.04 162);
+  --warning: oklch(0.769 0.146 70.08);
+  --warning-bg: oklch(0.22 0.04 70);
+  --border: hsl(219 32% 15%);
+  --input: hsl(219 32% 17%);
+  --ring: hsl(206 85% 54%);
+  --shadow: 0 1px 3px 0 oklch(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    "Sora", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--foreground);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+code,
+.mono {
+  font-family:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+.muted {
+  color: var(--muted-foreground);
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  border: 0;
+  margin: 0;
+}
+
+/* ── topbar ────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 60px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+  backdrop-filter: var(--topbar-blur);
+  -webkit-backdrop-filter: var(--topbar-blur);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  margin-right: 14px;
+  font-family: "Sora", sans-serif;
+}
+.brand:hover {
+  text-decoration: none;
+}
+
+/* Blueprint grid behind topbar in dark mode */
+:root.dark .topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.nav {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav::-webkit-scrollbar {
+  display: none;
+}
+.navlink {
+  display: inline-flex;
+  align-items: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  height: auto;
+  padding: 7px 13px;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.navlink:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+.navlink-active,
+a.navlink.router-link-active {
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.navlink-icon {
+  padding: 7px;
+}
+.spacer {
+  flex: 1;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  padding: 0 6px;
+  min-width: 0;
+}
+.who img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.who span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── layout ────────────────────────────────────── */
+.container {
+  max-width: 75rem;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+}
+h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  font-family: "Sora", sans-serif;
+}
+h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  font-family: "Sora", sans-serif;
+}
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 22px;
+}
+
+/* ── cards ─────────────────────────────────────── */
+.card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
+}
+/* Stacked cards get breathing room — but never inside a grid/flex row. */
+.card + .card {
+  margin-top: 1.25rem;
+}
+.stats .card + .card,
+.row .card + .card {
+  margin-top: 0;
+}
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Subtle glow on primary-highlighted cards in dark mode */
+:root.dark .card.card-primary {
+  border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  box-shadow: 0 0 24px -8px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+/* ── buttons ───────────────────────────────────── */
+.btn,
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    opacity 0.15s;
+}
+button svg,
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+.btn:hover,
+button:hover:not(:disabled) {
+  background: var(--accent-token);
+  text-decoration: none;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+.btn-primary:hover {
+  background: color-mix(in oklab, var(--primary) 88%, var(--background));
+}
+:root.dark .btn-primary {
+  box-shadow: 0 0 16px -6px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.btn-outline:hover {
+  background: var(--accent-token);
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+.btn-danger {
+  background: transparent;
+  color: var(--destructive);
+  border-color: transparent;
+  box-shadow: none;
+}
+.btn-danger:hover {
+  background: color-mix(in oklab, var(--destructive) 12%, var(--background));
+}
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--muted-foreground);
+}
+.btn-ghost:hover {
+  background: var(--accent-token);
+  color: var(--foreground);
+}
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  border-radius: calc(var(--radius) - 4px);
+}
+.btn-block {
+  width: 100%;
+}
+
+/* ── forms ─────────────────────────────────────── */
+.label,
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: "JetBrains Mono", monospace;
+}
+.input,
+input,
+textarea,
+select {
+  font: inherit;
+  width: 100%;
+  height: 40px;
+  padding: 0 13px;
+  font-size: 14px;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.6;
+}
+.input:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+}
+textarea {
+  height: auto;
+  min-height: 7rem;
+  padding: 0.6rem 0.7rem;
+  resize: vertical;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.field + .field {
+  margin-top: 0.9rem;
+}
+.row {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.row > .field {
+  flex: 1;
+  min-width: 8rem;
+  margin-top: 0;
+}
+
+/* ── badges ────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.03em;
+}
+.badge-outline,
+.badge-revoked {
+  background: transparent;
+  color: var(--muted-foreground);
+  border-color: var(--border);
+}
+.badge-success,
+.badge-active {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: color-mix(in oklab, var(--success) 35%, transparent);
+}
+.badge-warning,
+.badge-expired,
+.badge-consumed {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: color-mix(in oklab, var(--warning) 35%, transparent);
+}
+.badge-lock {
+  background: transparent;
+  color: var(--muted-foreground);
+  border-color: var(--border);
+}
+.badge-reported {
+  background: color-mix(in oklab, var(--destructive) 12%, var(--background));
+  color: var(--destructive);
+  border-color: color-mix(in oklab, var(--destructive) 35%, transparent);
+}
+
+/* ── stat cards ────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.stat {
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hairline accent bar on top of each stat card in dark mode */
+:root.dark .stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--primary) 60%, transparent),
+    transparent
+  );
+  border-radius: 0 0 2px 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: "JetBrains Mono", monospace;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-family: "Sora", sans-serif;
+}
+.stat-sub {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-top: 8px;
+}
+
+/* ── data table ────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: "JetBrains Mono", monospace;
+}
+td {
+  padding: 14px 16px;
+  font-size: 13.5px;
+  vertical-align: middle;
+}
+tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+tbody tr {
+  transition: background 0.12s;
+}
+tbody tr:hover td {
+  background: color-mix(in oklab, var(--primary) 4%, transparent);
+}
+.trunc {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.icon-lock {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.nowrap {
+  white-space: nowrap;
+}
+
+/* ── share list rows ───────────────────────────── */
+.share {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  padding: 1rem 1.25rem;
+}
+.share + .share {
+  border-top: 1px solid var(--border);
+}
+.share-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.share-meta {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
+}
+.share-meta span + span::before {
+  content: "·";
+  margin: 0 0.45rem;
+}
+.share-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  justify-self: end;
+}
+.share.is-inactive .share-name {
+  color: var(--muted-foreground);
+}
+
+/* ── misc ──────────────────────────────────────── */
+.kbd-block {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 13px;
+}
+.alert {
+  padding: 0.7rem 0.9rem;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+.alert-error {
+  color: var(--destructive);
+  border-color: color-mix(in oklab, var(--destructive) 40%, transparent);
+  background: color-mix(in oklab, var(--destructive) 8%, transparent);
+}
+.alert-info {
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border-color: transparent;
+}
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--muted-foreground);
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+  cursor: pointer;
+}
+.dropzone.dragging {
+  border-color: var(--ring);
+  background: color-mix(in oklab, var(--ring) 8%, transparent);
+}
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted-foreground);
+}
+.key-reveal {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  word-break: break-all;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+}
+.spinner {
+  text-align: center;
+  padding: 3rem;
+  color: var(--muted-foreground);
+}
+.toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-family: "JetBrains Mono", monospace;
+  box-shadow: 0 8px 30px -12px color-mix(in oklab, var(--primary) 60%, transparent);
+  z-index: 100;
+}
+:root.dark .toast {
+  box-shadow: 0 8px 30px -6px color-mix(in oklab, var(--primary) 50%, transparent);
+}
+
+/* ── responsive ────────────────────────────────── */
+@media (max-width: 900px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 0 16px;
+  }
+  .brand {
+    margin-right: 8px;
+  }
+  .navlink {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+  /* Avatar only — the name takes too much room next to the nav. */
+  .who span {
+    display: none;
+  }
+  .container {
+    padding: 24px 16px 64px;
+  }
+  h1 {
+    font-size: 22px;
+  }
+  .stat {
+    padding: 14px 16px;
+  }
+  .stat-value {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.openapi-check.d.ts
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Makefile dev-server runtime state (pids + logs)
+.run/
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+
+# Postgres data volume (if ever mounted locally)
+.pgdata/
+
+# Local filesystem storage backend (Phase 1)
+.storage/
+**/.storage/
+
+# Embedded SQLite database (default DATABASE_URL)
+.data/
+**/.data/

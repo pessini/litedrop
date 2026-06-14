@@ -1,0 +1,40 @@
+{
+  "name": "@litedrop/cli",
+  "version": "0.1.0",
+  "description": "CLI for litedrop — share markdown/HTML via a link.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "litedrop": "dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "genversion": "node scripts/gen-version.mjs",
+    "predev": "npm run genversion",
+    "dev": "node src/main.ts",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prebuild": "npm run genversion",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "pretest": "npm run genversion",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "pretypecheck": "npm run genversion",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "compile": "bash scripts/build-binaries.sh",
+    "compile:local": "npm run genversion && bun build src/main.ts --compile --minify --external undici --outfile binaries/litedrop"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "undici": "^7.0.0"
+  },
+  "devDependencies": {
+    "@litedrop/api-types": "*",
+    "@types/node": "^22.10.0",
+    "typescript": "^6.0.3"
+  }
+}
