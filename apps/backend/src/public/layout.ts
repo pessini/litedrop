@@ -130,7 +130,7 @@ export function pageShell({ title, bodyHtml, slug }: PageOptions): string {
 </nav>
 <article class="ld-content">${bodyHtml}</article>
 <footer class="ld-foot">
-<span class="ld-via">shared via <a class="ld-brand" href="https://litedrop.dev">litedrop.</a> · <a href="https://litedrop.dev/privacy">privacy</a> · <a href="https://litedrop.dev/terms">terms</a></span>
+<span class="ld-via">shared via <a class="ld-brand" href="https://litedrop.dev" rel="noreferrer">litedrop.</a> · <a href="https://litedrop.dev/privacy" rel="noreferrer">privacy</a> · <a href="https://litedrop.dev/terms" rel="noreferrer">terms</a></span>
 ${reportLink}
 </footer>
 </div>
@@ -197,7 +197,7 @@ body { margin: 0; display: flex; flex-direction: column;
   <span><form method="post" action="/s/${enc}/report"><button type="submit">report abuse</button></form> · <label for="ld-hide" title="Hide this notice">✕</label></span>
 </div>
 <iframe class="ld-frame" src="${escapeHtml(contentUrl)}" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Shared HTML preview (sandboxed)"></iframe>
-<footer class="ld-mark">shared via <a href="https://litedrop.dev">litedrop.</a> · <a href="https://litedrop.dev/privacy">privacy</a> · <a href="https://litedrop.dev/terms">terms</a></footer>
+<footer class="ld-mark">shared via <a href="https://litedrop.dev" rel="noreferrer">litedrop.</a> · <a href="https://litedrop.dev/privacy" rel="noreferrer">privacy</a> · <a href="https://litedrop.dev/terms" rel="noreferrer">terms</a></footer>
 </body>
 </html>`;
 }
