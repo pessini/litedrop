@@ -47,7 +47,6 @@ COPY --from=build /app/apps/backend/dist ./apps/backend/dist
 # SQL migrations ship alongside dist: the server applies the sqlite set itself
 # at boot (src/db/migrate.ts resolves this exact path).
 COPY --from=build /app/apps/backend/src/db/migrations ./apps/backend/src/db/migrations
-COPY --from=build /app/apps/backend/src/db/migrations-sqlite ./apps/backend/src/db/migrations-sqlite
 COPY --from=build /app/apps/dashboard/dist ./apps/dashboard/dist
 COPY apps/backend/package.json ./apps/backend/
 COPY package.json ./

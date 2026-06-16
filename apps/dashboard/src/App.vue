@@ -15,7 +15,10 @@ async function logout() {
 
 <template>
   <header v-if="auth.isAuthenticated.value" class="topbar">
-    <router-link to="/" class="brand">litedrop</router-link>
+    <router-link to="/" class="brand" aria-label="litedrop dashboard">
+      <img class="brand-logo brand-logo-light" src="/brand/logo.svg" alt="" aria-hidden="true" />
+      <img class="brand-logo brand-logo-dark" src="/brand/logo-dark.svg" alt="" aria-hidden="true" />
+    </router-link>
     <nav class="nav">
       <router-link to="/" class="navlink" active-class="" exact-active-class="navlink-active">
         Shares
@@ -35,6 +38,12 @@ async function logout() {
   </header>
 
   <router-view />
+
+  <footer v-if="auth.isAuthenticated.value" class="dashboard-footer">
+    <span>&copy; 2026 <a href="https://litedrop.dev">litedrop.</a></span>
+    <a href="https://litedrop.dev/privacy">privacy</a>
+    <a href="https://litedrop.dev/terms">terms</a>
+  </footer>
 
   <div v-if="toastMessage" class="toast">{{ toastMessage }}</div>
 </template>
