@@ -164,10 +164,10 @@ async function submitPassword() {
 .login-logo-dark {
   display: none;
 }
-:root.dark .login-logo-light {
+:global(:root.dark .login-logo-light) {
   display: none;
 }
-:root.dark .login-logo-dark {
+:global(:root.dark .login-logo-dark) {
   display: block;
 }
 .login-kicker {
@@ -187,7 +187,7 @@ h1 {
   padding: 24px;
   text-align: left;
 }
-:root.dark .login-card {
+:global(:root.dark .login-card) {
   border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
   box-shadow: 0 0 40px -12px color-mix(in oklab, var(--primary) 35%, transparent);
 }
