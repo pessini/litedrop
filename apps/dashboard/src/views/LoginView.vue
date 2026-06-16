@@ -62,15 +62,8 @@ async function submitPassword() {
 
     <div class="login-inner">
       <div class="login-brand">
-        <span class="login-mark" aria-hidden>
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M12 3c3.2 4.1 6 7.2 6 10.3A6.1 6.1 0 0 1 12 19.5a6.1 6.1 0 0 1-6-6.2C6 10.2 8.8 7.1 12 3Z"
-              fill="currentColor"
-            />
-          </svg>
-        </span>
-        <span class="login-wordmark">litedrop</span>
+        <img class="login-logo login-logo-light" src="/brand/logo.svg" alt="litedrop" />
+        <img class="login-logo login-logo-dark" src="/brand/logo-dark.svg" alt="litedrop" />
       </div>
 
       <p class="login-kicker mono">$ litedrop login</p>
@@ -161,29 +154,21 @@ async function submitPassword() {
 .login-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   margin-bottom: 28px;
 }
-.login-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  color: var(--primary);
-  background: color-mix(in oklab, var(--primary) 12%, transparent);
-  border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+.login-logo {
+  display: block;
+  width: 168px;
+  height: auto;
 }
-.login-mark svg {
-  width: 20px;
-  height: 20px;
+.login-logo-dark {
+  display: none;
 }
-.login-wordmark {
-  font-family: "Sora", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+:root.dark .login-logo-light {
+  display: none;
+}
+:root.dark .login-logo-dark {
+  display: block;
 }
 .login-kicker {
   font-size: 13px;

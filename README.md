@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="apps/dashboard/public/brand/logo-dark.svg">
+    <img src="apps/dashboard/public/brand/logo.svg" alt="litedrop" width="240">
+  </picture>
+</p>
+
 # litedrop
 
 Share markdown/HTML files via a link with optional expiration, password, and

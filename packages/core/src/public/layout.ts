@@ -78,8 +78,9 @@ body { margin: 0; }
 .ld-content table { border-collapse: collapse; width: 100%; }
 .ld-content th, .ld-content td { border: 1px solid var(--border); padding: .4em .6em; }
 .ld-content img { max-width: 100%; }
-.ld-foot { margin-top: 1.5rem; font-size: .8rem; color: var(--muted); display: flex; gap: 1rem; justify-content: space-between; }
+.ld-foot { margin-top: 1.5rem; font-size: .8rem; color: var(--muted); display: flex; gap: 1rem; justify-content: space-between; align-items: center; }
 .ld-foot a { color: var(--muted); }
+.ld-foot .ld-via { display: inline-flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
 .ld-foot .ld-brand { font-weight: 600; text-decoration: none; }
 .ld-foot .ld-brand:hover { text-decoration: underline; }
 .ld-report { display: inline; margin: 0; }
@@ -129,7 +130,7 @@ export function pageShell({ title, bodyHtml, slug }: PageOptions): string {
 </nav>
 <article class="ld-content">${bodyHtml}</article>
 <footer class="ld-foot">
-<span>shared via <a class="ld-brand" href="/">litedrop</a> · <a href="/terms">terms</a></span>
+<span class="ld-via">shared via <a class="ld-brand" href="https://litedrop.dev">litedrop.</a> · <a href="https://litedrop.dev/privacy">privacy</a> · <a href="https://litedrop.dev/terms">terms</a></span>
 ${reportLink}
 </footer>
 </div>
@@ -196,7 +197,7 @@ body { margin: 0; display: flex; flex-direction: column;
   <span><form method="post" action="/s/${enc}/report"><button type="submit">report abuse</button></form> · <label for="ld-hide" title="Hide this notice">✕</label></span>
 </div>
 <iframe class="ld-frame" src="${escapeHtml(contentUrl)}" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Shared HTML preview (sandboxed)"></iframe>
-<footer class="ld-mark">shared via <a href="/">litedrop</a></footer>
+<footer class="ld-mark">shared via <a href="https://litedrop.dev">litedrop.</a> · <a href="https://litedrop.dev/privacy">privacy</a> · <a href="https://litedrop.dev/terms">terms</a></footer>
 </body>
 </html>`;
 }
