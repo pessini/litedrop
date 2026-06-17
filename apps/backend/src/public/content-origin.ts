@@ -25,7 +25,9 @@ export interface ContentRouterDeps {
 export function createContentRouter(deps: ContentRouterDeps): Hono {
   const { store, storage, hooks } = deps;
   const contentRoutes = new Hono();
-  const APP_ORIGIN = originOf(env.APP_BASE_URL);
+  const SHARE_PAGE_ORIGIN = originOf(
+    env.PUBLIC_SHARE_BASE_URL ?? env.APP_BASE_URL,
+  );
 
   for (const mw of hooks?.middleware ?? []) contentRoutes.use("/c/:slug", mw);
 
@@ -64,10 +66,10 @@ export function createContentRouter(deps: ContentRouterDeps): Hono {
     return new Response(body, {
       status: 200,
       headers: {
-        // frame-ancestors restricts embedding to the app origin (a DIFFERENT
-        // domain in prod). Not X-Frame-Options: it can't name a cross-origin
-        // allowance, so SAMEORIGIN there would block the iframe.
-        "Content-Security-Policy": userContentCsp(APP_ORIGIN),
+        // frame-ancestors restricts embedding to the share-page origin (often
+        // a DIFFERENT domain in prod). Not X-Frame-Options: it can't name a
+        // cross-origin allowance, so SAMEORIGIN there would block the iframe.
+        "Content-Security-Policy": userContentCsp(SHARE_PAGE_ORIGIN),
         // Explicit type is required: nosniff disables inference, and without
         // it browsers won't render the body as HTML.
         "Content-Type": "text/html; charset=utf-8",

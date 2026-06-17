@@ -10,6 +10,7 @@ import { verifyPassword } from "../shares/password.ts";
 import type { StorageBackend } from "../storage/backend.ts";
 import { escapeHtml, htmlHostPage, pageShell } from "./layout.ts";
 import {
+  legacyShareRoute,
   sharePath,
   shareReportPath,
   shareRoute,
@@ -198,6 +199,11 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     return res ?? notFound(c);
   });
 
+  publicRoutes.get(legacyShareRoute("/raw"), async (c) => {
+    const res = await serveRaw(c, slugParam(c));
+    return res ?? notFound(c);
+  });
+
   // POST /:slug/unlock — verify a share password and set the signed,
   // slug-scoped unlock cookie. Accepts an HTML form or JSON {password}.
   publicRoutes.post(shareRoute("/unlock"), unlockRateLimit, async (c) => {
@@ -266,9 +272,7 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     );
   });
 
-  publicRoutes.get(shareRoute(), async (c) => {
-    const slug = slugParam(c);
-
+  async function serveSharePage(c: Context, slug: string): Promise<Response> {
     // Agent-friendly negotiation: explicit text/plain (and not html) → raw.
     const accept = c.req.header("Accept") ?? "";
     if (accept.includes("text/plain") && !accept.includes("text/html")) {
@@ -314,6 +318,14 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     c.header("Vary", "Accept");
     hooks?.decorateResponse?.(c, share);
     return c.html(htmlHostPage({ slug, filename: share.filename, contentUrl }));
+  }
+
+  publicRoutes.get(legacyShareRoute(), async (c) => {
+    return serveSharePage(c, slugParam(c));
+  });
+
+  publicRoutes.get(shareRoute(), async (c) => {
+    return serveSharePage(c, slugParam(c));
   });
 
   return publicRoutes;

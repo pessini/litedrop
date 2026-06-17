@@ -6,6 +6,7 @@ import type { StorageBackend } from "../src/storage/backend.ts";
 // Environment is validated once at module load, so pin the two origins and the
 // signing secret BEFORE the serving modules are (dynamically) imported.
 process.env.APP_BASE_URL = "https://app.example.com";
+process.env.PUBLIC_SHARE_BASE_URL = "https://share.example.com";
 process.env.CONTENT_BASE_URL = "https://content.example.com";
 process.env.UNLOCK_COOKIE_SECRET = "content-origin-test-secret";
 
@@ -100,7 +101,8 @@ test("serves HTML with an explicit Content-Type and the isolation headers", asyn
   const policy = res.headers.get("content-security-policy") ?? "";
   assert.match(policy, /sandbox allow-scripts/);
   assert.doesNotMatch(policy, /allow-same-origin/);
-  assert.match(policy, /frame-ancestors https:\/\/app\.example\.com/);
+  assert.match(policy, /frame-ancestors https:\/\/share\.example\.com/);
+  assert.doesNotMatch(policy, /frame-ancestors https:\/\/app\.example\.com/);
 
   assert.equal(await res.text(), HTML_BODY);
 });
