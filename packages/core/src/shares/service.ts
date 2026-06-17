@@ -193,6 +193,9 @@ export function parseControls(raw: RawControls): ParsedControls {
 }
 
 export function buildShareUrls(slug: string): { url: string; rawUrl: string } {
-  const base = env.APP_BASE_URL.replace(/\/$/, "");
-  return { url: `${base}/s/${slug}`, rawUrl: `${base}/s/${slug}/raw` };
+  const base = (env.PUBLIC_SHARE_BASE_URL ?? env.APP_BASE_URL).replace(
+    /\/$/,
+    "",
+  );
+  return { url: `${base}/${slug}`, rawUrl: `${base}/${slug}/raw` };
 }

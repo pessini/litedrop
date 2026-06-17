@@ -479,7 +479,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/s/{slug}": {
+    "/{slug}": {
         parameters: {
             query?: never;
             header?: never;
@@ -522,7 +522,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/s/{slug}/raw": {
+    "/{slug}/raw": {
         parameters: {
             query?: never;
             header?: never;
@@ -576,7 +576,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/s/{slug}/unlock": {
+    "/{slug}/unlock": {
         parameters: {
             query?: never;
             header?: never;
@@ -642,7 +642,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/s/{slug}/report": {
+    "/{slug}/report": {
         parameters: {
             query?: never;
             header?: never;

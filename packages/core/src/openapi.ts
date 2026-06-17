@@ -286,7 +286,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
           },
         },
       },
-      "/s/{slug}": {
+      "/{slug}": {
         get: {
           tags: ["public"],
           summary:
@@ -300,7 +300,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
           },
         },
       },
-      "/s/{slug}/raw": {
+      "/{slug}/raw": {
         get: {
           tags: ["public"],
           summary: "Raw bytes (text/plain) — agents/CLI; password via header",
@@ -322,7 +322,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
           },
         },
       },
-      "/s/{slug}/unlock": {
+      "/{slug}/unlock": {
         post: {
           tags: ["public"],
           summary: "Submit a share password; sets a scoped unlock cookie",
@@ -351,7 +351,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
           },
         },
       },
-      "/s/{slug}/report": {
+      "/{slug}/report": {
         post: {
           tags: ["public"],
           summary:

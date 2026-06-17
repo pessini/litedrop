@@ -131,7 +131,7 @@ export function isContentOriginRequestHost(
 }
 
 // --- Content token -----------------------------------------------------------
-// The unlock cookie is scoped to /s/<slug> on the APP origin, so it never
+// The unlock cookie is scoped to /<slug> on the APP origin, so it never
 // reaches /c/<slug> on the CONTENT origin. Instead the app origin — which has
 // already passed the password/expiry/revocation gate before rendering the host
 // page — mints a short-lived signed token bound to the slug and embeds it in

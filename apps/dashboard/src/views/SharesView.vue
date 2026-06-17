@@ -165,8 +165,8 @@ onMounted(load);
                   </div>
                 </td>
                 <td>
-                  <span class="trunc mono muted" style="font-size: 13px" :title="`/s/${s.slug}`">
-                    /s/{{ s.slug }}
+                  <span class="trunc mono muted" style="font-size: 13px" :title="`/${s.slug}`">
+                    /{{ s.slug }}
                   </span>
                 </td>
                 <td class="muted nowrap">{{ formatViews(s.view_count, s.max_views) }}</td>

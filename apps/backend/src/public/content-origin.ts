@@ -48,7 +48,7 @@ export function createContentRouter(deps: ContentRouterDeps): Hono {
     }
 
     // Re-check servability (revocation/expiry are immediate) but do NOT consume
-    // a view — the host page already did, on /s/:slug. Only HTML shares are
+    // a view — the host page already did, on /:slug. Only HTML shares are
     // framed; markdown is rendered on the app origin.
     const share = await loadServable(store, slug, hooks);
     if (share?.kind !== "html") return c.notFound();

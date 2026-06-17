@@ -9,6 +9,12 @@ import type { Share, ShareStore } from "../ports/share-store.ts";
 import { verifyPassword } from "../shares/password.ts";
 import type { StorageBackend } from "../storage/backend.ts";
 import { escapeHtml, htmlHostPage, pageShell } from "./layout.ts";
+import {
+  sharePath,
+  shareReportPath,
+  shareRoute,
+  shareUnlockPath,
+} from "./paths.ts";
 import { renderMarkdown } from "./render.ts";
 import { loadServable, type ServingHooks } from "./serving-hooks.ts";
 import {
@@ -80,11 +86,17 @@ function notFound(c: Context) {
   );
 }
 
+function slugParam(c: Context): string {
+  const slug = c.req.param("slug");
+  if (!slug) throw new Error("missing share slug route param");
+  return slug;
+}
+
 function passwordPromptPage(slug: string, error?: string): string {
   const errorHtml = error
     ? `<p style="color:#b91c1c;margin:0 0 1rem">${escapeHtml(error)}</p>`
     : "";
-  const action = `/s/${encodeURIComponent(slug)}/unlock`;
+  const action = shareUnlockPath(slug);
   return pageShell({
     title: "Password required",
     slug,
@@ -101,7 +113,7 @@ ${errorHtml}
 }
 
 function reportPromptPage(slug: string): string {
-  const action = `/s/${encodeURIComponent(slug)}/report`;
+  const action = shareReportPath(slug);
   return pageShell({
     title: "Report abuse",
     slug,
@@ -181,15 +193,15 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     return res;
   }
 
-  publicRoutes.get("/s/:slug/raw", async (c) => {
-    const res = await serveRaw(c, c.req.param("slug"));
+  publicRoutes.get(shareRoute("/raw"), async (c) => {
+    const res = await serveRaw(c, slugParam(c));
     return res ?? notFound(c);
   });
 
-  // POST /s/:slug/unlock — verify a share password and set the signed,
+  // POST /:slug/unlock — verify a share password and set the signed,
   // slug-scoped unlock cookie. Accepts an HTML form or JSON {password}.
-  publicRoutes.post("/s/:slug/unlock", unlockRateLimit, async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.post(shareRoute("/unlock"), unlockRateLimit, async (c) => {
+    const slug = slugParam(c);
     const share = await loadServable(store, slug, hooks);
     if (!share?.passwordHash) return notFound(c);
 
@@ -219,12 +231,12 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: "Lax",
-      path: `/s/${slug}`,
+      path: sharePath(slug),
       maxAge: UNLOCK_TTL_SEC,
     });
 
     if (wantsJson) return c.json({ unlocked: true });
-    return c.redirect(`/s/${encodeURIComponent(slug)}`, 303);
+    return c.redirect(sharePath(slug), 303);
   });
 
   // One-click abuse reporting, shared by every deployment. The share-page
@@ -234,14 +246,14 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
   // work for any existing slug, servable or not (a since-revoked link can
   // still be reported); an unknown slug 404s. A repeat click by the same
   // reporter is a no-op (same confirmation, no new row).
-  publicRoutes.get("/s/:slug/report", async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.get(shareRoute("/report"), async (c) => {
+    const slug = slugParam(c);
     if ((await store.bySlug(slug)) === null) return notFound(c);
     return c.html(reportPromptPage(slug));
   });
 
-  publicRoutes.post("/s/:slug/report", reportRateLimit, async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.post(shareRoute("/report"), reportRateLimit, async (c) => {
+    const slug = slugParam(c);
     const result = await store.recordReport(slug, reporterHash(clientIp(c)));
     if (result === null) return notFound(c);
     return c.html(
@@ -254,8 +266,8 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     );
   });
 
-  publicRoutes.get("/s/:slug", async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.get(shareRoute(), async (c) => {
+    const slug = slugParam(c);
 
     // Agent-friendly negotiation: explicit text/plain (and not html) → raw.
     const accept = c.req.header("Accept") ?? "";

@@ -4,14 +4,14 @@
 #   cp .env.example .env   # set DOMAIN + ADMIN_PASSWORD, point DNS at this box
 #   docker compose up -d --build
 #
-# Caddy obtains/renews Let's Encrypt certificates for both hostnames and
+# Caddy obtains/renews Let's Encrypt certificates for the hostnames and
 # proxies them to the app. The app serves everything (API, share pages,
 # dashboard) from one process; SQLite + blobs persist on named volumes.
 #
-# CONTENT_DOMAIN defaults to content.$DOMAIN — add a second DNS record for it
-# (the isolated origin that renders user HTML). To skip the second hostname
-# entirely, set ALLOW_SAME_ORIGIN_CONTENT=true in .env, leave CONTENT_BASE_URL
-# off the app below, and drop {$CONTENT_DOMAIN} from the Caddyfile.
+# SHARE_DOMAIN defaults to s.$DOMAIN and CONTENT_DOMAIN defaults to
+# content.$DOMAIN — add DNS records for both. To skip the content hostname,
+# set ALLOW_SAME_ORIGIN_CONTENT=true in .env, leave CONTENT_BASE_URL off the
+# app below, and drop {$CONTENT_DOMAIN} from the Caddyfile.
 
 services:
   litedrop:
@@ -21,6 +21,7 @@ services:
     restart: unless-stopped
     environment:
       APP_BASE_URL: https://${DOMAIN:?set DOMAIN in deploy/.env}
+      PUBLIC_SHARE_BASE_URL: https://${SHARE_DOMAIN:-s.${DOMAIN}}
       CONTENT_BASE_URL: https://${CONTENT_DOMAIN:-content.${DOMAIN}}
       TRUST_PROXY_HEADERS: "true"
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in deploy/.env}
@@ -43,6 +44,7 @@ services:
       - "443:443"
     environment:
       DOMAIN: ${DOMAIN}
+      SHARE_DOMAIN: ${SHARE_DOMAIN:-s.${DOMAIN}}
       CONTENT_DOMAIN: ${CONTENT_DOMAIN:-content.${DOMAIN}}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

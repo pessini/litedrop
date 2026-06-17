@@ -29,6 +29,7 @@ const EnvSchema = z.object({
   // runs. The file is migrated automatically at boot — zero external services.
   DATABASE_URL: z.string().min(1).default("file:./.data/litedrop.db"),
   APP_BASE_URL: z.string().url().default("http://localhost:8080"),
+  PUBLIC_SHARE_BASE_URL: z.string().url().optional(),
   TRUST_PROXY_HEADERS: EnvBool,
 
   // Public base URL of the ISOLATED user-content origin that serves raw user

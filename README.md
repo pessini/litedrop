@@ -55,7 +55,9 @@ dashboard SPA (auto-detecting `apps/dashboard/dist`):
 
 ```bash
 npm run build
-ADMIN_PASSWORD=… APP_BASE_URL=https://drop.example.com \
+ADMIN_PASSWORD=… APP_BASE_URL=https://app.example.com \
+  PUBLIC_SHARE_BASE_URL=https://s.example.com \
+  CONTENT_BASE_URL=https://content.example.com \
   node apps/backend/dist/index.js     # everything on :8080 — put a TLS proxy in front
 ```
 
@@ -66,7 +68,9 @@ docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
-  -e APP_BASE_URL=https://drop.example.com \
+  -e APP_BASE_URL=https://app.example.com \
+  -e PUBLIC_SHARE_BASE_URL=https://s.example.com \
+  -e CONTENT_BASE_URL=https://content.example.com \
   -v litedrop-db:/app/apps/backend/.data -v litedrop-blobs:/app/apps/backend/.storage litedrop
 ```
 
@@ -100,9 +104,9 @@ curl -s -X POST localhost:8080/api/shares \
   --data '{"name":"hi.md","content":"# Hello"}'
 
 # View rendered (browser) / raw (agents)
-curl localhost:8080/s/<slug>                          # sanitized HTML render
-curl localhost:8080/s/<slug>/raw                      # text/plain bytes
-curl -H "Accept: text/plain" localhost:8080/s/<slug>  # negotiated → raw
+curl localhost:8080/<slug>                          # sanitized HTML render
+curl localhost:8080/<slug>/raw                      # text/plain bytes
+curl -H "Accept: text/plain" localhost:8080/<slug>  # negotiated → raw
 
 # Manage
 curl localhost:8080/api/shares -H "Authorization: Bearer $TOKEN"               # list
@@ -141,13 +145,22 @@ to a separate hostname (routed to the same app) for origin isolation, or set
 `ALLOW_SAME_ORIGIN_CONTENT=true` to keep a single hostname (the iframe sandbox
 still applies; you only drop the extra origin-isolation layer).
 
+Set `PUBLIC_SHARE_BASE_URL` when public share links should use a dedicated
+share hostname. For example, self-hosted split-host deployments use:
+
+```env
+APP_BASE_URL=https://app.example.com
+PUBLIC_SHARE_BASE_URL=https://s.example.com
+CONTENT_BASE_URL=https://content.example.com
+```
+
 ## CLI
 
 ```bash
 cd cli && npm install && npm run build && npm link
 
 litedrop login --url http://localhost:8080   # paste your LITEDROP_TOKEN (or set LITEDROP_API_KEY)
-litedrop push report.html                     # → https://…/s/<slug>   (URL only on stdout)
+litedrop push report.html                     # → https://…/<slug>   (URL only on stdout)
 cat NOTES.md | litedrop push - --name NOTES.md
 litedrop push secret.md --expires 24h --password hunter2 --max-views 3
 litedrop ls            # table; --json for machine output
