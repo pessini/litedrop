@@ -52,6 +52,34 @@ const reportRateLimit = rateLimit({
   key: byIp,
 });
 
+const publicShareBaseUrl = env.PUBLIC_SHARE_BASE_URL?.replace(/\/$/, "");
+const publicShareHost = publicShareBaseUrl
+  ? new URL(publicShareBaseUrl).host.toLowerCase()
+  : null;
+
+function firstHeaderValue(value: string | undefined): string | null {
+  const first = value?.split(",")[0]?.trim();
+  return first || null;
+}
+
+function requestHost(c: Context): string | null {
+  const rawHost = env.TRUST_PROXY_HEADERS
+    ? c.req.header("x-forwarded-host") || c.req.header("host")
+    : c.req.header("host");
+  return firstHeaderValue(rawHost)?.toLowerCase() ?? null;
+}
+
+function canonicalShareRedirect(
+  c: Context,
+  slug: string,
+  suffix = "",
+  force = false,
+): Response | null {
+  if (!publicShareBaseUrl) return null;
+  if (!force && requestHost(c) === publicShareHost) return null;
+  return c.redirect(`${publicShareBaseUrl}${sharePath(slug, suffix)}`, 302);
+}
+
 // Reporter addresses are stored hashed — SHA-256 over the signing secret plus
 // the address — so the reports table never holds a raw IP.
 function reporterHash(ip: string): string {
@@ -195,12 +223,18 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
   }
 
   publicRoutes.get(shareRoute("/raw"), async (c) => {
-    const res = await serveRaw(c, slugParam(c));
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug, "/raw");
+    if (redirect) return redirect;
+    const res = await serveRaw(c, slug);
     return res ?? notFound(c);
   });
 
   publicRoutes.get(legacyShareRoute("/raw"), async (c) => {
-    const res = await serveRaw(c, slugParam(c));
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug, "/raw", true);
+    if (redirect) return redirect;
+    const res = await serveRaw(c, slug);
     return res ?? notFound(c);
   });
 
@@ -321,11 +355,17 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
   }
 
   publicRoutes.get(legacyShareRoute(), async (c) => {
-    return serveSharePage(c, slugParam(c));
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug, "", true);
+    if (redirect) return redirect;
+    return serveSharePage(c, slug);
   });
 
   publicRoutes.get(shareRoute(), async (c) => {
-    return serveSharePage(c, slugParam(c));
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug);
+    if (redirect) return redirect;
+    return serveSharePage(c, slug);
   });
 
   return publicRoutes;
