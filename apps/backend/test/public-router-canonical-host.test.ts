@@ -9,6 +9,7 @@ process.env.CONTENT_BASE_URL = "https://content.example.com";
 process.env.UNLOCK_COOKIE_SECRET = "public-router-canonical-test-secret";
 
 const { createPublicRouter } = await import("../src/public/view.ts");
+const { hashPassword } = await import("../src/shares/password.ts");
 
 const SLUG = "Abc123_-XyZ9";
 const MARKDOWN_BODY = "# Hello\n\nCanonical share host.\n";
@@ -32,7 +33,7 @@ const share: Share = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
 };
 
-function fakeStore(): ShareStore {
+function fakeStore(activeShare: Share = share): ShareStore {
   const unused = () =>
     Promise.reject(new Error("public route must not call this"));
   return {
@@ -40,8 +41,9 @@ function fakeStore(): ShareStore {
     listByOwner: unused,
     byIdForOwner: unused,
     revokeForOwner: unused,
-    bySlug: async (slug) => (slug === SLUG ? share : null),
-    consumeView: async (slug) => (slug === SLUG ? share : null),
+    bySlug: async (slug) => (slug === activeShare.slug ? activeShare : null),
+    consumeView: async (slug) =>
+      slug === activeShare.slug ? activeShare : null,
     recordReport: unused,
     reportCountsForOwner: unused,
     listForCleanup: unused,
@@ -61,7 +63,14 @@ function fakeStorage(): StorageBackend {
   };
 }
 
-const app = createPublicRouter({ store: fakeStore(), storage: fakeStorage() });
+function appWith(activeShare: Share = share) {
+  return createPublicRouter({
+    store: fakeStore(activeShare),
+    storage: fakeStorage(),
+  });
+}
+
+const app = appWith();
 
 test("redirects app-host root share paths to the configured share host", async () => {
   const res = await app.request(`/${SLUG}`, {
@@ -72,21 +81,43 @@ test("redirects app-host root share paths to the configured share host", async (
   assert.equal(res.headers.get("location"), `https://s.example.com/${SLUG}`);
 });
 
-test("redirects legacy share links to canonical root share paths", async () => {
+test("redirects legacy share page links to canonical root share paths", async () => {
   const page = await app.request(`/s/${SLUG}`, {
     headers: { host: "app.example.com" },
   });
   assert.equal(page.status, 302);
   assert.equal(page.headers.get("location"), `https://s.example.com/${SLUG}`);
+});
 
+test("serves legacy raw aliases on the original host", async () => {
   const raw = await app.request(`/s/${SLUG}/raw`, {
     headers: { host: "app.example.com" },
   });
-  assert.equal(raw.status, 302);
-  assert.equal(
-    raw.headers.get("location"),
-    `https://s.example.com/${SLUG}/raw`,
-  );
+
+  assert.equal(raw.status, 200);
+  assert.equal(await raw.text(), MARKDOWN_BODY);
+});
+
+test("serves protected legacy raw aliases with password headers", async () => {
+  const protectedApp = appWith({
+    ...share,
+    passwordHash: hashPassword("secret"),
+  });
+
+  const locked = await protectedApp.request(`/s/${SLUG}/raw`, {
+    headers: { host: "app.example.com" },
+  });
+  assert.equal(locked.status, 401);
+
+  const raw = await protectedApp.request(`/s/${SLUG}/raw`, {
+    headers: {
+      host: "app.example.com",
+      "X-Litedrop-Password": "secret",
+    },
+  });
+
+  assert.equal(raw.status, 200);
+  assert.equal(await raw.text(), MARKDOWN_BODY);
 });
 
 test("serves canonical root share paths on the configured share host", async () => {

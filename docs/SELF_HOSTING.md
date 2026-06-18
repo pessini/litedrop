@@ -44,7 +44,10 @@ litedrop behind [Caddy](https://caddyserver.com), which gets and renews TLS
 certificates automatically.
 
 1. Create three DNS records pointing at your server:
-   `app.example.com`, `s.example.com`, and `content.example.com`.
+   `app.example.com`, `s.app.example.com`, and `content.app.example.com`.
+   These match the default `s.$DOMAIN` and `content.$DOMAIN` Compose
+   hostnames; if you set `SHARE_DOMAIN` or `CONTENT_DOMAIN`, point those
+   hostnames instead.
 2. On the server:
 
 ```bash

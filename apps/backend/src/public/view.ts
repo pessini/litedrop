@@ -232,8 +232,8 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
 
   publicRoutes.get(legacyShareRoute("/raw"), async (c) => {
     const slug = slugParam(c);
-    const redirect = canonicalShareRedirect(c, slug, "/raw", true);
-    if (redirect) return redirect;
+    // Keep legacy raw aliases same-origin so CLI/agents do not lose password
+    // headers across app-host -> share-host redirects.
     const res = await serveRaw(c, slug);
     return res ?? notFound(c);
   });
