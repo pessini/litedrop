@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "undici": "^8.4.1"
+    "undici": "^8.5.0"
   },
   "devDependencies": {
     "@litedrop/api-types": "*",
