@@ -10,7 +10,6 @@ import { verifyPassword } from "../shares/password.ts";
 import type { StorageBackend } from "../storage/backend.ts";
 import { escapeHtml, htmlHostPage, pageShell } from "./layout.ts";
 import {
-  legacyShareRoute,
   sharePath,
   shareReportPath,
   shareRoute,
@@ -230,14 +229,6 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     return res ?? notFound(c);
   });
 
-  publicRoutes.get(legacyShareRoute("/raw"), async (c) => {
-    const slug = slugParam(c);
-    const redirect = canonicalShareRedirect(c, slug, "/raw", true);
-    if (redirect) return redirect;
-    const res = await serveRaw(c, slug);
-    return res ?? notFound(c);
-  });
-
   // POST /:slug/unlock — verify a share password and set the signed,
   // slug-scoped unlock cookie. Accepts an HTML form or JSON {password}.
   publicRoutes.post(shareRoute("/unlock"), unlockRateLimit, async (c) => {
@@ -353,13 +344,6 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     hooks?.decorateResponse?.(c, share);
     return c.html(htmlHostPage({ slug, filename: share.filename, contentUrl }));
   }
-
-  publicRoutes.get(legacyShareRoute(), async (c) => {
-    const slug = slugParam(c);
-    const redirect = canonicalShareRedirect(c, slug, "", true);
-    if (redirect) return redirect;
-    return serveSharePage(c, slug);
-  });
 
   publicRoutes.get(shareRoute(), async (c) => {
     const slug = slugParam(c);

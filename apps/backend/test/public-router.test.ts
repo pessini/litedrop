@@ -102,19 +102,6 @@ test("serves raw share bytes at root slug raw paths", async () => {
   assert.match(res.headers.get("content-type") ?? "", /^text\/plain/);
 });
 
-test("serves legacy /s share links as compatibility aliases", async () => {
-  const { app } = appWith(shareFixture());
-
-  const page = await app.request(`/s/${SLUG}`);
-  assert.equal(page.status, 200);
-  assert.match(await page.text(), /<h1>Hello<\/h1>/);
-
-  const raw = await app.request(`/s/${SLUG}/raw`);
-  assert.equal(raw.status, 200);
-  assert.equal(await raw.text(), MARKDOWN_BODY);
-  assert.match(raw.headers.get("content-type") ?? "", /^text\/plain/);
-});
-
 test("password unlock forms post and redirect on root slug paths", async () => {
   const { app } = appWith(
     shareFixture({ passwordHash: hashPassword("secret") }),
@@ -154,7 +141,14 @@ test("report prompts and posts use root slug paths", async () => {
 test("root share routes do not catch unrelated app paths", async () => {
   const { app } = appWith(shareFixture());
 
-  for (const path of ["/api/me", "/healthz", "/assets/app.js", "/shares"]) {
+  for (const path of [
+    "/api/me",
+    "/healthz",
+    "/assets/app.js",
+    "/shares",
+    `/s/${SLUG}`,
+    `/s/${SLUG}/raw`,
+  ]) {
     assert.equal((await app.request(path)).status, 404, path);
   }
 });

@@ -8,10 +8,6 @@ export function shareRoute(suffix = ""): string {
   return `/:slug{${SHARE_SLUG_PATTERN}}${suffix}`;
 }
 
-export function legacyShareRoute(suffix = ""): string {
-  return `/s/:slug{${SHARE_SLUG_PATTERN}}${suffix}`;
-}
-
 export function shareRawPath(slug: string): string {
   return sharePath(slug, "/raw");
 }
