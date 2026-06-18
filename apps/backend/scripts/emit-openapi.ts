@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 // doesn't create a real .data/ file as a side effect. A fixed base URL keeps
 // the output deterministic regardless of local env.
 process.env.DATABASE_URL = ":memory:";
+process.env.PUBLIC_SHARE_BASE_URL = "";
 
 const CANONICAL_BASE = "http://localhost:8080";
 const OUT = resolve(

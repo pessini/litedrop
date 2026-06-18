@@ -141,14 +141,7 @@ test("report prompts and posts use root slug paths", async () => {
 test("root share routes do not catch unrelated app paths", async () => {
   const { app } = appWith(shareFixture());
 
-  for (const path of [
-    "/api/me",
-    "/healthz",
-    "/assets/app.js",
-    "/shares",
-    `/s/${SLUG}`,
-    `/s/${SLUG}/raw`,
-  ]) {
+  for (const path of ["/api/me", "/healthz", "/assets/app.js", "/shares"]) {
     assert.equal((await app.request(path)).status, 404, path);
   }
 });

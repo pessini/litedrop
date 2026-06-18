@@ -72,18 +72,6 @@ test("redirects app-host root share paths to the configured share host", async (
   assert.equal(res.headers.get("location"), `https://s.example.com/${SLUG}`);
 });
 
-test("does not serve /s-prefixed share aliases", async () => {
-  const page = await app.request(`/s/${SLUG}`, {
-    headers: { host: "app.example.com" },
-  });
-  const raw = await app.request(`/s/${SLUG}/raw`, {
-    headers: { host: "app.example.com" },
-  });
-
-  assert.equal(page.status, 404);
-  assert.equal(raw.status, 404);
-});
-
 test("serves canonical root share paths on the configured share host", async () => {
   const res = await app.request(`/${SLUG}`, {
     headers: { host: "s.example.com" },

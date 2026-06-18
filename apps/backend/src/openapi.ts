@@ -74,6 +74,8 @@ const slugParam = {
 // passes a canonical value so the committed artifact is deterministic.
 export function buildOpenApiDocument(baseUrl?: string) {
   const base = (baseUrl ?? env.APP_BASE_URL).replace(/\/$/, "");
+  const shareBase = (env.PUBLIC_SHARE_BASE_URL ?? base).replace(/\/$/, "");
+  const publicServers = shareBase === base ? undefined : [{ url: shareBase }];
   return {
     openapi: "3.1.0",
     info: {
@@ -289,6 +291,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
       "/{slug}": {
         get: {
           tags: ["public"],
+          servers: publicServers,
           summary:
             "View a share (rendered HTML, or raw via Accept: text/plain)",
           parameters: [slugParam],
@@ -303,6 +306,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
       "/{slug}/raw": {
         get: {
           tags: ["public"],
+          servers: publicServers,
           summary: "Raw bytes (text/plain) — agents/CLI; password via header",
           parameters: [
             slugParam,
@@ -325,6 +329,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
       "/{slug}/unlock": {
         post: {
           tags: ["public"],
+          servers: publicServers,
           summary: "Submit a share password; sets a scoped unlock cookie",
           parameters: [slugParam],
           requestBody: {
@@ -354,6 +359,7 @@ export function buildOpenApiDocument(baseUrl?: string) {
       "/{slug}/report": {
         post: {
           tags: ["public"],
+          servers: publicServers,
           summary:
             "Report a share for abuse — one click, no body (rate limited)",
           parameters: [slugParam],

@@ -80,8 +80,9 @@ docker run -d -p 8080:8080 \
   litedrop
 ```
 
-Only one hostname available? Replace the `CONTENT_BASE_URL` line with
-`-e ALLOW_SAME_ORIGIN_CONTENT=true` (see [Content isolation](#content-isolation)).
+Only one hostname available? Omit `PUBLIC_SHARE_BASE_URL`, and replace the
+`CONTENT_BASE_URL` line with `-e ALLOW_SAME_ORIGIN_CONTENT=true` (see
+[Content isolation](#content-isolation)).
 
 ## Option 3: behind an existing proxy or platform
 
