@@ -29,11 +29,18 @@ export function clientIpFromHeaders(
 // the deployment explicitly enables them; direct clients can spoof
 // X-Forwarded-For / CF-Connecting-IP.
 export function clientIp(c: Context): string {
+  let socketAddress: string | undefined;
+  try {
+    socketAddress = getConnInfo(c).remote.address;
+  } catch {
+    socketAddress = undefined;
+  }
+
   return clientIpFromHeaders(
     {
       xForwardedFor: c.req.header("x-forwarded-for"),
       cfConnectingIp: c.req.header("cf-connecting-ip"),
-      socketAddress: getConnInfo(c).remote.address,
+      socketAddress,
     },
     env.TRUST_PROXY_HEADERS,
   );

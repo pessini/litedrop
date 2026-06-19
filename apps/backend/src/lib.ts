@@ -39,6 +39,13 @@ export {
   createContentRouter,
 } from "./public/content-origin.ts";
 export { escapeHtml, htmlHostPage, pageShell } from "./public/layout.ts";
+export {
+  sharePath,
+  shareRawPath,
+  shareReportPath,
+  shareRoute,
+  shareUnlockPath,
+} from "./public/paths.ts";
 export { renderMarkdown } from "./public/render.ts";
 // --- Serving hooks ---
 export {

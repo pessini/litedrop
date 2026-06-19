@@ -9,7 +9,13 @@ import { defineConfig } from "vite";
 // production, where the SPA is served from (or reverse-proxied onto) the app
 // origin alongside the API. Override the target with VITE_PROXY_TARGET.
 const PROXY_TARGET = process.env.VITE_PROXY_TARGET ?? "http://localhost:8080";
-const PROXY_PATHS = ["/api", "/auth", "^/s(?:/|$)", "^/c(?:/|$)", "/healthz"];
+const PROXY_PATHS = [
+  "/api",
+  "/auth",
+  "^/[A-Za-z0-9_-]{12}(?:/|$)",
+  "^/c(?:/|$)",
+  "/healthz",
+];
 
 export default defineConfig({
   plugins: [vue()],

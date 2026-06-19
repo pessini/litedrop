@@ -11,6 +11,7 @@ import { env } from "./env.ts";
 import { startCleanupScheduler } from "./jobs/cleanup.ts";
 import { buildOpenApiDocument } from "./openapi.ts";
 import { createContentRouter } from "./public/content-origin.ts";
+import { shareRoute } from "./public/paths.ts";
 import { createPublicRouter } from "./public/view.ts";
 import { createShareRouter } from "./shares/routes.ts";
 import { mountSpa, resolveSpaDir } from "./spa.ts";
@@ -28,7 +29,8 @@ app.use("*", logger());
 // Compress the public serving path (markdown/HTML compresses 3–5×, cutting
 // origin egress proportionally). Only touches compressible content types and
 // skips responses already carrying a Content-Encoding.
-app.use("/s/*", compress());
+app.use(shareRoute(), compress());
+app.use(shareRoute("/*"), compress());
 app.use("/c/*", compress());
 
 // With a built SPA available, "/" falls through to its index.html (mounted at

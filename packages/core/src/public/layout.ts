@@ -3,6 +3,8 @@
 // no JavaScript: the theme switcher is pure CSS (hidden radio inputs + sibling
 // selectors), preserving the no-script guarantee of the app-origin pages.
 
+import { shareReportPath } from "./paths.ts";
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -106,7 +108,7 @@ export function pageShell({ title, bodyHtml, slug }: PageOptions): string {
   // button styled as a link), never a GET link — scanners and prefetchers
   // follow links, and a report must cost a deliberate click.
   const reportLink = slug
-    ? `<form class="ld-report" method="post" action="/s/${encodeURIComponent(slug)}/report"><button type="submit">report abuse</button></form>`
+    ? `<form class="ld-report" method="post" action="${shareReportPath(slug)}"><button type="submit">report abuse</button></form>`
     : `<a href="/acceptable-use">acceptable use</a>`;
   return `<!doctype html>
 <html lang="en">
@@ -159,7 +161,6 @@ export function htmlHostPage({
   filename,
   contentUrl,
 }: HtmlHostOptions): string {
-  const enc = encodeURIComponent(slug);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -194,7 +195,7 @@ body { margin: 0; display: flex; flex-direction: column;
 <input type="checkbox" id="ld-hide" class="ld-hide" aria-label="Hide this notice">
 <div class="ld-bar" role="note">
   <span>🔒 This page is displayed in an isolated, secure sandbox.</span>
-  <span><form method="post" action="/s/${enc}/report"><button type="submit">report abuse</button></form> · <label for="ld-hide" title="Hide this notice">✕</label></span>
+  <span><form method="post" action="${shareReportPath(slug)}"><button type="submit">report abuse</button></form> · <label for="ld-hide" title="Hide this notice">✕</label></span>
 </div>
 <iframe class="ld-frame" src="${escapeHtml(contentUrl)}" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Shared HTML preview (sandboxed)"></iframe>
 <footer class="ld-mark">shared via <a href="https://litedrop.dev" rel="noreferrer">litedrop.</a> · <a href="https://litedrop.dev/privacy" rel="noreferrer">privacy</a> · <a href="https://litedrop.dev/terms" rel="noreferrer">terms</a></footer>

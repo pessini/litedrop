@@ -837,7 +837,7 @@
         }
       }
     },
-    "/s/{slug}": {
+    "/{slug}": {
       "get": {
         "tags": [
           "public"
@@ -863,7 +863,7 @@
         }
       }
     },
-    "/s/{slug}/raw": {
+    "/{slug}/raw": {
       "get": {
         "tags": [
           "public"
@@ -906,7 +906,7 @@
         }
       }
     },
-    "/s/{slug}/unlock": {
+    "/{slug}/unlock": {
       "post": {
         "tags": [
           "public"
@@ -962,7 +962,7 @@
         }
       }
     },
-    "/s/{slug}/report": {
+    "/{slug}/report": {
       "post": {
         "tags": [
           "public"

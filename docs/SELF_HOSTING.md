@@ -22,7 +22,7 @@ known limitations.
 
 - A server that can run Docker (or Node 22.18+).
 - A domain name pointed at the server.
-- Optional but recommended: a second hostname for content isolation (see
+- Optional but recommended: dedicated share and content hostnames (see
   [Content isolation](#content-isolation)).
 
 ### Minimum versions
@@ -43,8 +43,11 @@ The [deploy/](../deploy/) folder contains a ready Compose file that runs
 litedrop behind [Caddy](https://caddyserver.com), which gets and renews TLS
 certificates automatically.
 
-1. Create two DNS records pointing at your server:
-   `drop.example.com` and `content.drop.example.com`.
+1. Create three DNS records pointing at your server:
+   `app.example.com`, `s.app.example.com`, and `content.app.example.com`.
+   These match the default `s.$DOMAIN` and `content.$DOMAIN` Compose
+   hostnames; if you set `SHARE_DOMAIN` or `CONTENT_DOMAIN`, point those
+   hostnames instead.
 2. On the server:
 
 ```bash
@@ -54,7 +57,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `https://drop.example.com` and sign in with your admin password. Data lives
+Open `https://app.example.com` and sign in with your admin password. Data lives
 in named Docker volumes (`litedrop-db`, `litedrop-blobs`), so `docker compose
 down` and upgrades keep your data.
 
@@ -68,16 +71,18 @@ docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -d -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
-  -e APP_BASE_URL=https://drop.example.com \
-  -e CONTENT_BASE_URL=https://content.drop.example.com \
+  -e APP_BASE_URL=https://app.example.com \
+  -e PUBLIC_SHARE_BASE_URL=https://s.example.com \
+  -e CONTENT_BASE_URL=https://content.example.com \
   -e TRUST_PROXY_HEADERS=true \
   -v litedrop-db:/app/apps/backend/.data \
   -v litedrop-blobs:/app/apps/backend/.storage \
   litedrop
 ```
 
-Only one hostname available? Replace the `CONTENT_BASE_URL` line with
-`-e ALLOW_SAME_ORIGIN_CONTENT=true` (see [Content isolation](#content-isolation)).
+Only one hostname available? Omit `PUBLIC_SHARE_BASE_URL`, and replace the
+`CONTENT_BASE_URL` line with `-e ALLOW_SAME_ORIGIN_CONTENT=true` (see
+[Content isolation](#content-isolation)).
 
 ## Option 3: behind an existing proxy or platform
 
@@ -89,8 +94,9 @@ run the deploy/ Caddy bundle — you only need the app container.
 1. Deploy the image built from `apps/backend/Dockerfile` with the repo root as build
    context.
 2. Set the environment: `ADMIN_PASSWORD`, `LITEDROP_TOKEN`,
-   `TRUST_PROXY_HEADERS=true`, and `APP_BASE_URL=https://<your-domain>`.
-3. Route your domain to the container's port 8080.
+   `TRUST_PROXY_HEADERS=true`, `APP_BASE_URL=https://<app-domain>`, and
+   `PUBLIC_SHARE_BASE_URL=https://<share-domain>`.
+3. Route the app and share domains to the container's port 8080.
 4. Mount a persistent volume at `/app/apps/backend/.data` and `/app/apps/backend/.storage`
    to keep the SQLite + local-disk defaults. No volume available (e.g. Cloud
    Run)? Use a cloud storage provider (`STORAGE_PROVIDER=r2|s3|azure` plus its
@@ -98,12 +104,13 @@ run the deploy/ Caddy bundle — you only need the app container.
    to persist the generated one. (SQLite still wants a real disk — see
    limitations.)
 5. Content isolation: attach a second domain to the same service (same port) and
-   set `CONTENT_BASE_URL=https://<second-domain>`, or set
+   set `CONTENT_BASE_URL=https://<content-domain>`, or set
    `ALLOW_SAME_ORIGIN_CONTENT=true` for a single domain.
 
 One requirement on the proxy: it must forward the original `Host` header
 (Traefik and the platforms do by default; for hand-written nginx set
-`proxy_set_header Host $host;`). Share links are built from `APP_BASE_URL`.
+`proxy_set_header Host $host;`). Share links are built from
+`PUBLIC_SHARE_BASE_URL`, or from `APP_BASE_URL` when the share base is unset.
 
 ## Option 4: Node, no Docker
 
@@ -111,7 +118,10 @@ One requirement on the proxy: it must forward the original `Host` header
 npm install
 npm run build
 ADMIN_PASSWORD=change-me-please LITEDROP_TOKEN=$(openssl rand -hex 32) \
-  APP_BASE_URL=https://drop.example.com node apps/backend/dist/index.js
+  APP_BASE_URL=https://app.example.com \
+  PUBLIC_SHARE_BASE_URL=https://s.example.com \
+  CONTENT_BASE_URL=https://content.example.com \
+  node apps/backend/dist/index.js
 ```
 
 Everything is served on port 8080 (override with `PORT`). Put a TLS proxy in
@@ -123,7 +133,8 @@ front.
 |---|---|---|
 | `ADMIN_PASSWORD` | unset | Dashboard login password (min 8 chars). Unset = headless (CLI/API only). |
 | `LITEDROP_TOKEN` | unset | Bearer token the CLI/agents send (min 16 chars). Rotate by changing it. Unset = no token auth (dashboard cookie only). |
-| `APP_BASE_URL` | `http://localhost:8080` | Public URL of the app. Used to build share links. Must match the URL users hit. |
+| `APP_BASE_URL` | `http://localhost:8080` | Public URL of the app/dashboard origin. Must match the URL users hit for app/API/dashboard pages. |
+| `PUBLIC_SHARE_BASE_URL` | unset | Public URL used to build share links. Defaults to `APP_BASE_URL` when unset. Use a dedicated share hostname such as `https://s.example.com` for split-host deployments. |
 | `CONTENT_BASE_URL` | unset | Second hostname (routed to the same app) that serves user HTML from an isolated origin. Required in production unless you opt out. |
 | `ALLOW_SAME_ORIGIN_CONTENT` | `false` | Opt out of the second-hostname requirement. |
 | `TRUST_PROXY_HEADERS` | `false` | Set `true` behind a proxy so rate limits see real client IPs. |
@@ -161,8 +172,8 @@ production deployments serve that HTML from a second hostname
 (`CONTENT_BASE_URL`) where the session cookie is not valid, so even a browser
 sandbox escape could not reach your session.
 
-- **Two hostnames** (recommended): add a DNS record like
-  `content.drop.example.com`, route it to the same app, set `CONTENT_BASE_URL`.
+- **Dedicated content hostname** (recommended): add a DNS record like
+  `content.example.com`, route it to the same app, set `CONTENT_BASE_URL`.
   The deploy/ Compose file does this by default.
 - **One hostname**: set `ALLOW_SAME_ORIGIN_CONTENT=true`. The iframe sandbox and
   CSP still apply; you lose only the extra origin layer. Reasonable for a

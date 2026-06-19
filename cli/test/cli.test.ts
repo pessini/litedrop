@@ -99,8 +99,8 @@ before(async () => {
       const share: MockShare = {
         id: `00000000-0000-0000-0000-${String(counter).padStart(12, "0")}`,
         slug,
-        url: `${baseUrl}/s/${slug}`,
-        raw_url: `${baseUrl}/s/${slug}/raw`,
+        url: `${baseUrl}/${slug}`,
+        raw_url: `${baseUrl}/${slug}/raw`,
         filename: name,
         kind: "markdown",
         size_bytes: size,
@@ -234,7 +234,7 @@ test("push writes only the share URL to stdout", async () => {
   const { code, stdout, stderr } = await runCli(["push", file]);
 
   assert.equal(code, 0);
-  assert.match(stdout, /^http:\/\/127\.0\.0\.1:\d+\/s\/slug\d+\n$/);
+  assert.match(stdout, /^http:\/\/127\.0\.0\.1:\d+\/slug\d+\n$/);
   assert.equal(stderr, "");
 });
 
@@ -261,7 +261,7 @@ test("push from stdin with --name uploads", async () => {
     stdin: "# piped\n",
   });
   assert.equal(code, 0);
-  assert.match(stdout, /\/s\/slug\d+\n$/);
+  assert.match(stdout, /\/slug\d+\n$/);
 });
 
 test("push rejects zero max views before upload", async () => {

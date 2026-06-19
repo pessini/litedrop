@@ -1,6 +1,7 @@
-# Both hostnames terminate TLS here and proxy to the one litedrop process; the
-# app tells them apart by Host header (CONTENT_BASE_URL serves the isolated
-# user-HTML origin). Caddy fetches and renews certificates automatically.
-{$DOMAIN}, {$CONTENT_DOMAIN} {
+# Hostnames terminate TLS here and proxy to the one litedrop process; the app
+# tells them apart by Host header (PUBLIC_SHARE_BASE_URL builds share links,
+# CONTENT_BASE_URL serves the isolated user-HTML origin). Caddy fetches and
+# renews certificates automatically.
+{$DOMAIN}, {$SHARE_DOMAIN}, {$CONTENT_DOMAIN} {
 	reverse_proxy litedrop:8080
 }

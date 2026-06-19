@@ -9,6 +9,12 @@ import type { Share, ShareStore } from "../ports/share-store.ts";
 import { verifyPassword } from "../shares/password.ts";
 import type { StorageBackend } from "../storage/backend.ts";
 import { escapeHtml, htmlHostPage, pageShell } from "./layout.ts";
+import {
+  sharePath,
+  shareReportPath,
+  shareRoute,
+  shareUnlockPath,
+} from "./paths.ts";
 import { renderMarkdown } from "./render.ts";
 import { loadServable, type ServingHooks } from "./serving-hooks.ts";
 import {
@@ -45,6 +51,34 @@ const reportRateLimit = rateLimit({
   key: byIp,
 });
 
+const publicShareBaseUrl = env.PUBLIC_SHARE_BASE_URL?.replace(/\/$/, "");
+const publicShareHost = publicShareBaseUrl
+  ? new URL(publicShareBaseUrl).host.toLowerCase()
+  : null;
+
+function firstHeaderValue(value: string | undefined): string | null {
+  const first = value?.split(",")[0]?.trim();
+  return first || null;
+}
+
+function requestHost(c: Context): string | null {
+  const rawHost = env.TRUST_PROXY_HEADERS
+    ? c.req.header("x-forwarded-host") || c.req.header("host")
+    : c.req.header("host");
+  return firstHeaderValue(rawHost)?.toLowerCase() ?? null;
+}
+
+function canonicalShareRedirect(
+  c: Context,
+  slug: string,
+  suffix = "",
+  force = false,
+): Response | null {
+  if (!publicShareBaseUrl) return null;
+  if (!force && requestHost(c) === publicShareHost) return null;
+  return c.redirect(`${publicShareBaseUrl}${sharePath(slug, suffix)}`, 302);
+}
+
 // Reporter addresses are stored hashed — SHA-256 over the signing secret plus
 // the address — so the reports table never holds a raw IP.
 function reporterHash(ip: string): string {
@@ -80,11 +114,17 @@ function notFound(c: Context) {
   );
 }
 
+function slugParam(c: Context): string {
+  const slug = c.req.param("slug");
+  if (!slug) throw new Error("missing share slug route param");
+  return slug;
+}
+
 function passwordPromptPage(slug: string, error?: string): string {
   const errorHtml = error
     ? `<p style="color:#b91c1c;margin:0 0 1rem">${escapeHtml(error)}</p>`
     : "";
-  const action = `/s/${encodeURIComponent(slug)}/unlock`;
+  const action = shareUnlockPath(slug);
   return pageShell({
     title: "Password required",
     slug,
@@ -101,7 +141,7 @@ ${errorHtml}
 }
 
 function reportPromptPage(slug: string): string {
-  const action = `/s/${encodeURIComponent(slug)}/report`;
+  const action = shareReportPath(slug);
   return pageShell({
     title: "Report abuse",
     slug,
@@ -181,15 +221,18 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     return res;
   }
 
-  publicRoutes.get("/s/:slug/raw", async (c) => {
-    const res = await serveRaw(c, c.req.param("slug"));
+  publicRoutes.get(shareRoute("/raw"), async (c) => {
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug, "/raw");
+    if (redirect) return redirect;
+    const res = await serveRaw(c, slug);
     return res ?? notFound(c);
   });
 
-  // POST /s/:slug/unlock — verify a share password and set the signed,
+  // POST /:slug/unlock — verify a share password and set the signed,
   // slug-scoped unlock cookie. Accepts an HTML form or JSON {password}.
-  publicRoutes.post("/s/:slug/unlock", unlockRateLimit, async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.post(shareRoute("/unlock"), unlockRateLimit, async (c) => {
+    const slug = slugParam(c);
     const share = await loadServable(store, slug, hooks);
     if (!share?.passwordHash) return notFound(c);
 
@@ -219,12 +262,12 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: "Lax",
-      path: `/s/${slug}`,
+      path: sharePath(slug),
       maxAge: UNLOCK_TTL_SEC,
     });
 
     if (wantsJson) return c.json({ unlocked: true });
-    return c.redirect(`/s/${encodeURIComponent(slug)}`, 303);
+    return c.redirect(sharePath(slug), 303);
   });
 
   // One-click abuse reporting, shared by every deployment. The share-page
@@ -234,14 +277,14 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
   // work for any existing slug, servable or not (a since-revoked link can
   // still be reported); an unknown slug 404s. A repeat click by the same
   // reporter is a no-op (same confirmation, no new row).
-  publicRoutes.get("/s/:slug/report", async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.get(shareRoute("/report"), async (c) => {
+    const slug = slugParam(c);
     if ((await store.bySlug(slug)) === null) return notFound(c);
     return c.html(reportPromptPage(slug));
   });
 
-  publicRoutes.post("/s/:slug/report", reportRateLimit, async (c) => {
-    const slug = c.req.param("slug");
+  publicRoutes.post(shareRoute("/report"), reportRateLimit, async (c) => {
+    const slug = slugParam(c);
     const result = await store.recordReport(slug, reporterHash(clientIp(c)));
     if (result === null) return notFound(c);
     return c.html(
@@ -254,9 +297,7 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     );
   });
 
-  publicRoutes.get("/s/:slug", async (c) => {
-    const slug = c.req.param("slug");
-
+  async function serveSharePage(c: Context, slug: string): Promise<Response> {
     // Agent-friendly negotiation: explicit text/plain (and not html) → raw.
     const accept = c.req.header("Accept") ?? "";
     if (accept.includes("text/plain") && !accept.includes("text/html")) {
@@ -302,6 +343,13 @@ export function createPublicRouter(deps: PublicRouterDeps): Hono {
     c.header("Vary", "Accept");
     hooks?.decorateResponse?.(c, share);
     return c.html(htmlHostPage({ slug, filename: share.filename, contentUrl }));
+  }
+
+  publicRoutes.get(shareRoute(), async (c) => {
+    const slug = slugParam(c);
+    const redirect = canonicalShareRedirect(c, slug);
+    if (redirect) return redirect;
+    return serveSharePage(c, slug);
   });
 
   return publicRoutes;

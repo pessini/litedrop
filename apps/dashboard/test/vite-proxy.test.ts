@@ -19,6 +19,8 @@ test("dev proxy does not catch Vite source modules", () => {
 });
 
 test("dev proxy still catches public share and content routes", () => {
-  assert.deepEqual(matchedProxyKeys("/s/example-slug"), ["^/s(?:/|$)"]);
+  assert.deepEqual(matchedProxyKeys("/Abc123_-XyZ9"), [
+    "^/[A-Za-z0-9_-]{12}(?:/|$)",
+  ]);
   assert.deepEqual(matchedProxyKeys("/c/example-slug"), ["^/c(?:/|$)"]);
 });
