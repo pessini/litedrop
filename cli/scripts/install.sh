@@ -2,15 +2,15 @@
 # litedrop CLI installer — downloads a prebuilt standalone binary (no Node
 # required) from GitHub Releases and drops it on your PATH.
 #
-#   curl -fsSL https://raw.githubusercontent.com/OWNER/litedrop/main/core/cli/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/pessini/litedrop/main/cli/scripts/install.sh | sh
 #
 # Env overrides:
-#   LITEDROP_REPO     GitHub owner/repo            (default: OWNER/litedrop)
+#   LITEDROP_REPO     GitHub owner/repo            (default: pessini/litedrop)
 #   LITEDROP_VERSION  release tag, e.g. cli-v0.1.0 (default: latest)
 #   LITEDROP_BIN_DIR  install directory            (default: ~/.local/bin)
 set -eu
 
-REPO="${LITEDROP_REPO:-OWNER/litedrop}"
+REPO="${LITEDROP_REPO:-pessini/litedrop}"
 VERSION="${LITEDROP_VERSION:-latest}"
 BIN_DIR="${LITEDROP_BIN_DIR:-$HOME/.local/bin}"
 

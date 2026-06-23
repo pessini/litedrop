@@ -1,9 +1,29 @@
 {
   "name": "@litedrop/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for litedrop — share markdown/HTML via a link.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/pessini/litedrop#readme",
+  "bugs": {
+    "url": "https://github.com/pessini/litedrop/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pessini/litedrop.git",
+    "directory": "cli"
+  },
+  "keywords": [
+    "litedrop",
+    "cli",
+    "markdown",
+    "html",
+    "sharing"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "engines": {
     "node": ">=22.19"
   },
@@ -11,7 +31,9 @@
     "litedrop": "dist/main.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "package.json"
   ],
   "scripts": {
     "genversion": "node scripts/gen-version.mjs",
@@ -21,6 +43,7 @@
     "prebuild": "npm run genversion",
     "build": "npm run clean && tsc -p tsconfig.json",
     "start": "node dist/main.js",
+    "prepack": "npm run build",
     "pretest": "npm run genversion",
     "test": "node --test \"test/**/*.test.ts\"",
     "pretypecheck": "npm run genversion",

@@ -33,6 +33,9 @@ known limitations.
 | npm | 10 | Bundled with Node 22+. One `npm install` at the repo root covers every package. |
 | Docker + Compose | Compose v2 | Only for the container setups. |
 
+The published `@litedrop/cli` package requires Node.js 22.19+ on the client
+machine where you install and run it.
+
 ## Option 1: VPS with Docker Compose and Caddy
 
 Use this when the server runs nothing else on ports 80/443. If your VPS already
@@ -163,6 +166,44 @@ Two ENV secrets, no database:
 There is no user-management, password-change, or reset UI: change a secret by
 changing the env var and restarting. Existing sessions stay valid until they
 expire or you log out.
+
+## CLI
+
+Install the published CLI from npm when Node.js 22.19+ is available:
+
+```bash
+npm install -g @litedrop/cli
+litedrop login --url https://app.example.com
+```
+
+Or install the standalone binary from GitHub Releases when you do not want Node
+on the machine running the CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pessini/litedrop/main/cli/scripts/install.sh | sh
+litedrop login --url https://app.example.com
+```
+
+When prompted, paste your server's `LITEDROP_TOKEN`. You can also run without a
+saved config by exporting the token:
+
+```bash
+export LITEDROP_API_URL=https://app.example.com
+export LITEDROP_API_KEY="$LITEDROP_TOKEN"
+```
+
+Common commands:
+
+```bash
+litedrop push report.html
+cat NOTES.md | litedrop push - --name NOTES.md
+litedrop push secret.md --expires 24h --max-views 3
+litedrop ls
+litedrop revoke <id-or-slug>
+```
+
+The CLI prints only the share URL on stdout for `push`, so scripts can capture
+it directly: `URL=$(litedrop push report.html)`.
 
 ## Content isolation
 

@@ -45,7 +45,17 @@ No Docker, no services:
 
 ```bash
 npm install
-ADMIN_PASSWORD=change-me-please npm run -w @litedrop/backend dev   # http://localhost:8080
+LITEDROP_TOKEN=dev-token-change-me-please \
+  ADMIN_PASSWORD=change-me-please \
+  npm run -w @litedrop/backend dev   # http://localhost:8080
+```
+
+Then install the published CLI and log in with the same `LITEDROP_TOKEN`:
+
+```bash
+npm install -g @litedrop/cli
+litedrop login --url http://localhost:8080
+litedrop push README.md
 ```
 
 The backend defaults to an embedded SQLite database (`apps/backend/.data/litedrop.db`)
@@ -156,21 +166,40 @@ CONTENT_BASE_URL=https://content.example.com
 
 ## CLI
 
+Install with npm when Node.js 22.19+ is available:
+
 ```bash
-cd cli && npm install && npm run build && npm link
+npm install -g @litedrop/cli
 
 litedrop login --url http://localhost:8080   # paste your LITEDROP_TOKEN (or set LITEDROP_API_KEY)
 litedrop push report.html                     # → https://…/<slug>   (URL only on stdout)
 cat NOTES.md | litedrop push - --name NOTES.md
-litedrop push secret.md --expires 24h --password hunter2 --max-views 3
+read -rs LITEDROP_PASSWORD && export LITEDROP_PASSWORD
+litedrop push secret.md --expires 24h --max-views 3
 litedrop ls            # table; --json for machine output
 litedrop open <id|slug>
 litedrop revoke <id|slug>
 litedrop logout
 ```
 
+Or install the standalone binary from GitHub Releases when you do not want Node
+on the machine running the CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pessini/litedrop/main/cli/scripts/install.sh | sh
+```
+
 Config lives at `~/.config/litedrop/config.json` (`0600`). stdout carries only
 the share URL so it composes in shells/agents: `URL=$(litedrop push report.html)`.
+Release automation is documented in [docs/RELEASING.md](docs/RELEASING.md).
+
+For CLI development from this repository:
+
+```bash
+npm run -w @litedrop/cli build
+node cli/dist/main.js --help
+npm run -w @litedrop/cli compile:local
+```
 
 ## Backend scripts
 

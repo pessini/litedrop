@@ -1,8 +1,7 @@
 name: CLI Release
 
-# Build standalone CLI binaries (Node not required on the user's machine) and
-# attach them to a GitHub Release. Triggered by pushing a tag like `cli-v0.1.0`.
-# Bun cross-compiles every target from a single Linux runner.
+# Publish @litedrop/cli to npm and attach standalone binaries to a GitHub
+# Release. Triggered by pushing a tag like `cli-v0.1.0`.
 on:
   push:
     tags: ["cli-v*"]
@@ -13,10 +12,18 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  CLI_RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+concurrency:
+  group: cli-release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  verify:
+    name: Verify CLI package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -28,14 +35,68 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
-      # Installs commander (the CLI's only runtime dep) so bun can bundle it.
+      - run: npm ci
+
+      - name: Check tag matches cli/package.json
+        run: |
+          version="$(node -p "require('./cli/package.json').version")"
+          expected="cli-v${version}"
+          if [ "$CLI_RELEASE_TAG" != "$expected" ]; then
+            echo "Tag ${CLI_RELEASE_TAG} does not match cli/package.json version ${version}; expected ${expected}." >&2
+            exit 1
+          fi
+
+      - run: npm run -w @litedrop/cli test
+      - run: npm run -w @litedrop/cli typecheck
+      - run: npm pack -w @litedrop/cli --dry-run --json
+
+  publish-npm:
+    name: Publish npm package
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm --version
+      - run: npm publish -w @litedrop/cli --access public --provenance
+
+  release-binaries:
+    name: Release standalone binaries
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      # Installs commander so Bun can bundle it into the standalone executables.
       - run: npm ci
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      # Cross-compile the full target matrix into cli/binaries/.
+      # Bun cross-compiles the full target matrix into cli/binaries/.
       - run: npm run -w @litedrop/cli compile
 
       # Checksums so the install script (and users) can verify downloads.
