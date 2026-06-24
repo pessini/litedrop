@@ -160,10 +160,10 @@ Common scripts:
 
 | Script | Purpose |
 |---|---|
-| `npm run dev` | Run the backend dev server with `node --watch`. |
+| `npm run -w @litedrop/backend dev` | Run the backend dev server with `node --watch`. |
 | `npm run build` | Build all workspaces. |
 | `npm run typecheck` | Type-check without emitting. |
-| `npm run db:migrate` | Apply committed SQLite migrations. |
+| `npm run -w @litedrop/backend db:migrate` | Apply committed SQLite migrations. |
 | `npm run -w @litedrop/cli build` | Build the CLI. |
 | `npm run -w @litedrop/cli compile:local` | Build a local standalone CLI binary. |
 
