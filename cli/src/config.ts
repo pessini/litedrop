@@ -14,7 +14,10 @@ import { configPath } from "./paths.ts";
 //   Config     — the resolved view (file + env overrides) the client uses.
 // Env always wins, so LITEDROP_API_KEY / LITEDROP_API_URL work without login.
 
-export const DEFAULT_BASE_URL = "http://localhost:8080";
+// The hosted service is the default target, so a fresh `litedrop login` works
+// for litedrop.dev signups with no flags. Self-hosters point at their own
+// server once with `--url` (or LITEDROP_API_URL); the choice is persisted.
+export const DEFAULT_BASE_URL = "https://app.litedrop.dev";
 
 export interface FileConfig {
   api_key?: string;

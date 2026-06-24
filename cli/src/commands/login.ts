@@ -9,7 +9,7 @@ import {
   saveFileConfig,
   stripTrailingSlash,
 } from "../config.ts";
-import { usageError } from "../errors.ts";
+import { apiError, CliError, usageError } from "../errors.ts";
 
 // `login` stores an API key after validating it against the server.
 export function registerLogin(program: Command): void {
@@ -42,7 +42,25 @@ export function registerLogin(program: Command): void {
         (await promptKey());
 
       // Validate before persisting, so we never store a dead token.
-      await Client.withKey(base, key).me();
+      try {
+        await Client.withKey(base, key).me();
+      } catch (err) {
+        // A connection failure here usually means the URL is wrong, not the
+        // key — most often a self-hoster who forgot `--url`. Point both kinds
+        // of user at the fix instead of surfacing a bare "fetch failed".
+        if (
+          err instanceof CliError &&
+          err.kind === "api" &&
+          err.message.includes("could not reach the server")
+        ) {
+          throw apiError(
+            `couldn't reach a litedrop server at ${base}.\n` +
+              `  • Hosted service: litedrop login --url https://app.litedrop.dev\n` +
+              `  • Self-hosting: litedrop login --url <your-server-url>`,
+          );
+        }
+        throw err;
+      }
 
       fc.api_key = key;
       saveFileConfig(fc);

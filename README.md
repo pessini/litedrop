@@ -33,6 +33,10 @@ litedrop login --url http://localhost:8080
 litedrop push README.md
 ```
 
+Using the hosted service at [litedrop.dev](https://litedrop.dev)? Skip the local
+server and just run `litedrop login` (no `--url` needed) with the token from your
+account — the CLI targets the hosted service by default.
+
 For production, build one container and put a TLS proxy in front:
 
 ```bash

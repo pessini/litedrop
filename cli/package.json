@@ -1,6 +1,6 @@
 {
   "name": "@litedrop/cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI for litedrop — share markdown/HTML via a link.",
   "license": "MIT",
   "type": "module",
