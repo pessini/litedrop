@@ -17,6 +17,9 @@ build/
 *.log
 npm-debug.log*
 
+# Local-only docs and maintainer notes
+docs/
+
 # Makefile dev-server runtime state (pids + logs)
 .run/
 

@@ -7,50 +7,25 @@
 
 # litedrop
 
-Share markdown/HTML files via a link with optional expiration, password, and
-view limits. CLI-first, single-user, self-hosted.
+Share markdown and HTML files through links with optional expiration, passwords,
+and view limits. litedrop is CLI-first, single-user, and self-hosted.
 
-litedrop runs as **one process** with **zero external services**: an embedded
-SQLite database (migrated automatically at boot) and local-disk storage. Log in
-to the dashboard with a password you set; drive it from the CLI with a token.
-Want object storage instead of disk? Point it at S3/R2/Azure. That's the whole
-operational story — see the [self-hosting guide](docs/SELF_HOSTING.md).
+It runs as one Node process: the API, public share pages, and dashboard are
+served together on port 8080. By default it uses embedded SQLite and local disk
+storage, with optional S3, R2, or Azure blob storage.
 
-## Layout
+## Quick Start
 
-```
-litedrop/                # npm workspaces — one root `npm install`
-├── apps/
-│   ├── backend/         # Hono + Drizzle API + SSR public pages (Node 22.18+, SQLite)
-│   └── dashboard/       # Vue 3 dashboard SPA (own shares + password login)
-├── packages/
-│   ├── core/            # @pessini/litedrop-core: reusable library surface
-│   └── api-types/       # @litedrop/api-types: shared response/request types
-└── cli/                 # Node/TS CLI (commander)
-```
-
-## Tech stack
-
-- **Backend** — [Hono](https://hono.dev) on Node.js, [Drizzle ORM](https://orm.drizzle.team)
-  over embedded SQLite, Zod validation, markdown-it + sanitize-html rendering,
-  a dependency-free S3 SigV4 signer (no AWS SDK).
-- **Dashboard** — Vue 3 + Vite single-page app.
-- **CLI** — Node/TS with commander.
-- **Tooling** — TypeScript 6, [Biome](https://biomejs.dev), native Node TS type
-  stripping (no dev build step), `node:test`, npm workspaces.
-
-## Quick start
-
-No Docker, no services:
+Run locally with no Docker and no external services:
 
 ```bash
 npm install
 LITEDROP_TOKEN=dev-token-change-me-please \
   ADMIN_PASSWORD=change-me-please \
-  npm run -w @litedrop/backend dev   # http://localhost:8080
+  npm run -w @litedrop/backend dev
 ```
 
-Then install the published CLI and log in with the same `LITEDROP_TOKEN`:
+Open `http://localhost:8080`, then use the CLI with the same token:
 
 ```bash
 npm install -g @litedrop/cli
@@ -58,20 +33,7 @@ litedrop login --url http://localhost:8080
 litedrop push README.md
 ```
 
-The backend defaults to an embedded SQLite database (`apps/backend/.data/litedrop.db`)
-and local-disk storage (`apps/backend/.storage`). For production, build everything
-and run the one process — it serves the API, the public share pages, and the
-dashboard SPA (auto-detecting `apps/dashboard/dist`):
-
-```bash
-npm run build
-ADMIN_PASSWORD=… APP_BASE_URL=https://app.example.com \
-  PUBLIC_SHARE_BASE_URL=https://s.example.com \
-  CONTENT_BASE_URL=https://content.example.com \
-  node apps/backend/dist/index.js     # everything on :8080 — put a TLS proxy in front
-```
-
-Or as a single container (SQLite + blobs on named volumes):
+For production, build one container and put a TLS proxy in front:
 
 ```bash
 docker build -f apps/backend/Dockerfile -t litedrop .
@@ -81,100 +43,38 @@ docker run -p 8080:8080 \
   -e APP_BASE_URL=https://app.example.com \
   -e PUBLIC_SHARE_BASE_URL=https://s.example.com \
   -e CONTENT_BASE_URL=https://content.example.com \
-  -v litedrop-db:/app/apps/backend/.data -v litedrop-blobs:/app/apps/backend/.storage litedrop
+  -v litedrop-db:/app/apps/backend/.data \
+  -v litedrop-blobs:/app/apps/backend/.storage \
+  litedrop
 ```
 
-Full instructions, configuration reference, and known limitations:
-[docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
+See [SELF_HOSTING.md](SELF_HOSTING.md) for DNS, TLS, volumes, backups, and all
+environment variables.
 
-## Auth
+## How It Works
 
-Two ENV secrets — no accounts, no signup, no database tables for auth:
-
-- **`ADMIN_PASSWORD`** — log in to the dashboard with this password; it sets a
-  signed session cookie. Leave unset to run headless (CLI/API only).
-- **`LITEDROP_TOKEN`** — the CLI/agents send this as `Authorization: Bearer …`.
-  Any sufficiently long secret; rotate by changing the env var.
-
-Anyone with a share's link can view it (the slug is the capability); only you,
-authenticated, can create or manage shares.
-
-## API
-
-```bash
-TOKEN=…   # your LITEDROP_TOKEN
-
-# Upload markdown (raw body + ?name) → share JSON
-curl -s -X POST "localhost:8080/api/shares?name=NOTES.md" \
-  -H "Authorization: Bearer $TOKEN" --data-binary @NOTES.md
-
-# Or JSON body
-curl -s -X POST localhost:8080/api/shares \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  --data '{"name":"hi.md","content":"# Hello"}'
-
-# View rendered (browser) / raw (agents)
-curl localhost:8080/<slug>                          # sanitized HTML render
-curl localhost:8080/<slug>/raw                      # text/plain bytes
-curl -H "Accept: text/plain" localhost:8080/<slug>  # negotiated → raw
-
-# Manage
-curl localhost:8080/api/shares -H "Authorization: Bearer $TOKEN"               # list
-curl -X DELETE localhost:8080/api/shares/<id> -H "Authorization: Bearer $TOKEN"  # revoke
-```
-
-Guardrails at upload: extension allowlist (`.md/.markdown/.html/.htm`),
-UTF-8/binary sniff, 5 MB cap.
-
-### Link controls
-
-Three optional controls per share. Raw uploads pass `expires`/`max_views` as
-query params and `password` as a header; JSON uploads put all three in the body:
-
-```bash
-curl -s -X POST "localhost:8080/api/shares?name=secret.md&expires=24h&max_views=3" \
-  -H "Authorization: Bearer $TOKEN" -H "X-Litedrop-Share-Password: hunter2" \
-  --data-binary @secret.md
-```
-
-- **`expires`** — `1h｜24h｜7d｜30d｜never`, any `<n>h`/`<n>d`, or ISO-8601.
-  Default `7d`; a past timestamp is rejected.
-- **`password`** — scrypt-hashed; stored, never echoed (the response flags
-  `has_password`). Browsers get an unlock prompt → signed slug-scoped cookie;
-  agents send `X-Litedrop-Password`. A wrong password never costs a view.
-- **`max_views`** — burn-after-read; the increment is atomic.
-
-Expired, revoked, and fully-consumed links all return the same 404 (no oracle).
-
-### Safe HTML rendering
-
-Markdown is sanitized and rendered on the app origin. **HTML is never executed
-on the app origin** — it's served raw from an isolated content origin into a
-fully-sandboxed iframe, token-gated, under a strict CSP. Set `CONTENT_BASE_URL`
-to a separate hostname (routed to the same app) for origin isolation, or set
-`ALLOW_SAME_ORIGIN_CONTENT=true` to keep a single hostname (the iframe sandbox
-still applies; you only drop the extra origin-isolation layer).
-
-Set `PUBLIC_SHARE_BASE_URL` when public share links should use a dedicated
-share hostname. For example, self-hosted split-host deployments use:
-
-```env
-APP_BASE_URL=https://app.example.com
-PUBLIC_SHARE_BASE_URL=https://s.example.com
-CONTENT_BASE_URL=https://content.example.com
-```
+- **Auth:** `ADMIN_PASSWORD` logs into the dashboard. `LITEDROP_TOKEN` is the
+  bearer token used by the CLI and API clients. There are no accounts, signup
+  flows, or auth database tables.
+- **Shares:** anyone with a share link can view it. Only an authenticated user
+  can create, list, or revoke shares.
+- **Link controls:** each share can expire, require a password, or stop after a
+  maximum number of views. Expired, revoked, and fully consumed links all return
+  the same 404.
+- **HTML safety:** markdown is sanitized on the app origin. Uploaded HTML is
+  served from an isolated content origin into a sandboxed iframe under a strict
+  CSP. Single-host deployments can opt out with `ALLOW_SAME_ORIGIN_CONTENT=true`.
+- **Storage:** local disk is the default. Set `STORAGE_PROVIDER` to `s3`, `r2`,
+  or `azure` when you want object storage instead.
 
 ## CLI
-
-Install with npm when Node.js 22.19+ is available:
 
 ```bash
 npm install -g @litedrop/cli
 
-litedrop login --url http://localhost:8080   # paste your LITEDROP_TOKEN (or set LITEDROP_API_KEY)
-litedrop push report.html                     # → https://…/<slug>   (URL only on stdout)
+litedrop login --url http://localhost:8080
+litedrop push report.html
 cat NOTES.md | litedrop push - --name NOTES.md
-read -rs LITEDROP_PASSWORD && export LITEDROP_PASSWORD
 litedrop push secret.md --expires 24h --max-views 3
 litedrop ls            # table; --json for machine output
 litedrop open <id|slug>
@@ -182,39 +82,90 @@ litedrop revoke <id|slug>
 litedrop logout
 ```
 
-Or install the standalone binary from GitHub Releases when you do not want Node
-on the machine running the CLI:
+If the machine running the CLI does not have Node.js, install the standalone
+binary from GitHub Releases:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/pessini/litedrop/main/cli/scripts/install.sh | sh
 ```
 
-Config lives at `~/.config/litedrop/config.json` (`0600`). stdout carries only
-the share URL so it composes in shells/agents: `URL=$(litedrop push report.html)`.
-Release automation is documented in [docs/RELEASING.md](docs/RELEASING.md).
+Config is stored at `~/.config/litedrop/config.json` with `0600` permissions.
+`litedrop push` prints only the share URL on stdout, so scripts can capture it:
+`URL=$(litedrop push report.html)`.
 
-For CLI development from this repository:
+## API
 
 ```bash
-npm run -w @litedrop/cli build
-node cli/dist/main.js --help
-npm run -w @litedrop/cli compile:local
+TOKEN=... # your LITEDROP_TOKEN
+
+# Upload markdown or HTML.
+curl -s -X POST "localhost:8080/api/shares?name=NOTES.md" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-binary @NOTES.md
+
+# View rendered content or raw bytes.
+curl localhost:8080/<slug>
+curl localhost:8080/<slug>/raw
+curl -H "Accept: text/plain" localhost:8080/<slug>
+
+# Manage shares.
+curl localhost:8080/api/shares -H "Authorization: Bearer $TOKEN"
+curl -X DELETE localhost:8080/api/shares/<id> -H "Authorization: Bearer $TOKEN"
 ```
 
-## Backend scripts
+JSON uploads are also supported:
+
+```bash
+curl -s -X POST localhost:8080/api/shares \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  --data '{"name":"hi.md","content":"# Hello"}'
+```
+
+Optional controls:
+
+| Control | Raw upload | JSON upload | Notes |
+|---|---|---|---|
+| Expiration | `?expires=24h` | `{"expires":"24h"}` | Supports `1h`, `24h`, `7d`, `30d`, `never`, `<n>h`, `<n>d`, or ISO-8601. Default is `7d`; past timestamps are rejected. |
+| Password | `X-Litedrop-Share-Password` | `{"password":"..."}` | Stored as a scrypt hash; never echoed. Browsers unlock with a signed slug cookie. Agents can send `X-Litedrop-Password`. Wrong passwords do not cost a view. |
+| Max views | `?max_views=3` | `{"max_views":3}` | Burn-after-read; increments are atomic. |
+
+Uploads are limited to markdown and HTML extensions (`.md`, `.markdown`,
+`.html`, `.htm`), UTF-8 text, and 5 MB.
+
+## Development
+
+```
+litedrop/
+|-- apps/
+|   |-- backend/         # Hono + Drizzle API and SSR public pages
+|   `-- dashboard/       # Vue 3 dashboard SPA
+|-- packages/
+|   |-- core/            # @pessini/litedrop-core
+|   `-- api-types/       # @litedrop/api-types
+`-- cli/                 # Node/TypeScript CLI
+```
+
+Stack:
+
+- **Backend:** Hono, Drizzle ORM, embedded SQLite, Zod, markdown-it,
+  sanitize-html, dependency-free S3/R2 SigV4 signing, and standalone Azure
+  Shared-Key signing.
+- **Dashboard:** Vue 3 and Vite.
+- **CLI:** TypeScript and commander.
+- **Tooling:** TypeScript 6, Biome, native Node.js TypeScript stripping,
+  `node:test`, and npm workspaces.
+
+Common scripts:
 
 | Script | Purpose |
 |---|---|
-| `npm run dev` | Hot-reloading dev server (`node --watch`, native TS) |
-| `npm run build` | Compile TS → `dist/` |
-| `npm run typecheck` | Type-check without emitting |
-| `npm run db:migrate` | Apply committed SQLite migrations |
+| `npm run dev` | Run the backend dev server with `node --watch`. |
+| `npm run build` | Build all workspaces. |
+| `npm run typecheck` | Type-check without emitting. |
+| `npm run db:migrate` | Apply committed SQLite migrations. |
+| `npm run -w @litedrop/cli build` | Build the CLI. |
+| `npm run -w @litedrop/cli compile:local` | Build a local standalone CLI binary. |
 
-SQLite migrates itself at boot — no migrate step to run in production.
-
-## Storage
-
-Every consumer touches only the `storage` singleton; the provider is chosen at
-boot by `STORAGE_PROVIDER` (`local` default, or `s3`/`r2`/`azure`). R2 and S3
-share one dependency-free SigV4 client; Azure is a standalone Shared-Key impl.
-See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) for the per-provider env vars.
+SQLite migrations run automatically at backend boot, so production does not need
+a separate migration command.
