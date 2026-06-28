@@ -112,3 +112,72 @@ jobs:
           files: |
             cli/binaries/litedrop-*
             cli/binaries/SHA256SUMS
+
+  update-homebrew-tap:
+    name: Update Homebrew tap
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Resolve published npm tarball
+        id: npm
+        run: |
+          version="$(node -p "require('./cli/package.json').version")"
+
+          for attempt in 1 2 3 4 5; do
+            tarball="$(npm view "@litedrop/cli@${version}" dist.tarball 2>/dev/null || true)"
+            if [ -n "$tarball" ]; then
+              break
+            fi
+            sleep 10
+          done
+
+          if [ -z "$tarball" ]; then
+            echo "Could not resolve @litedrop/cli@${version} from npm." >&2
+            exit 1
+          fi
+
+          sha256="$(curl -fsSL "$tarball" | shasum -a 256 | awk '{print $1}')"
+
+          {
+            echo "version=${version}"
+            echo "tarball=${tarball}"
+            echo "sha256=${sha256}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update tap formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.npm.outputs.version }}
+          TARBALL: ${{ steps.npm.outputs.tarball }}
+          SHA256: ${{ steps.npm.outputs.sha256 }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN is required to update pessini/homebrew-tap." >&2
+            exit 1
+          fi
+
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/pessini/homebrew-tap.git" tap
+          cd tap
+
+          ruby -i -pe 'gsub(%r{url "https://registry\.npmjs\.org/@litedrop/cli/-/cli-[^"]+\.tgz"}, "url \"#{ENV.fetch("TARBALL")}\"")' Formula/litedrop.rb
+          ruby -i -pe 'gsub(/sha256 "[0-9a-f]{64}"/, "sha256 \"#{ENV.fetch("SHA256")}\"")' Formula/litedrop.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/litedrop.rb
+
+          if git diff --cached --quiet; then
+            echo "Homebrew formula is already up to date."
+            exit 0
+          fi
+
+          git commit -m "Update litedrop to $VERSION"
+          git push
