@@ -144,7 +144,10 @@ jobs:
             exit 1
           fi
 
-          sha256="$(curl -fsSL "$tarball" | shasum -a 256 | awk '{print $1}')"
+          tmp_tarball="$(mktemp)"
+          trap 'rm -f "$tmp_tarball"' EXIT
+          curl -fsSL "$tarball" -o "$tmp_tarball"
+          sha256="$(shasum -a 256 "$tmp_tarball" | awk '{print $1}')"
 
           {
             echo "version=${version}"
