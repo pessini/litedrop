@@ -28,7 +28,7 @@ LITEDROP_TOKEN=dev-token-change-me-please \
 Open `http://localhost:8080`, then use the CLI with the same token:
 
 ```bash
-npm install -g @litedrop/cli
+brew install pessini/tap/litedrop
 litedrop login --url http://localhost:8080
 litedrop push README.md
 ```
@@ -70,7 +70,7 @@ environment variables.
 ## CLI
 
 ```bash
-npm install -g @litedrop/cli
+brew install pessini/tap/litedrop
 
 litedrop login --url http://localhost:8080
 litedrop push report.html
@@ -87,6 +87,12 @@ binary from GitHub Releases:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/pessini/litedrop/main/cli/scripts/install.sh | sh
+```
+
+You can also install the CLI with npm when Node.js is already available:
+
+```bash
+npm install -g @litedrop/cli
 ```
 
 Config is stored at `~/.config/litedrop/config.json` with `0600` permissions.

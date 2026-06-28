@@ -2,6 +2,21 @@
 
 Share Markdown or HTML files through a litedrop server and print the public URL.
 
+## Install With Homebrew
+
+```bash
+brew install pessini/tap/litedrop
+litedrop --help
+```
+
+Or add the tap first:
+
+```bash
+brew tap pessini/tap
+brew install litedrop
+litedrop --help
+```
+
 ## Install With npm
 
 Use this path when Node.js 22.19 or newer is available:
