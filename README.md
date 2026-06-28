@@ -28,7 +28,8 @@ LITEDROP_TOKEN=dev-token-change-me-please \
 Open `http://localhost:8080`, then use the CLI with the same token:
 
 ```bash
-brew install pessini/tap/litedrop
+brew tap pessini/tap
+brew install litedrop
 litedrop login --url http://localhost:8080
 litedrop push README.md
 ```
@@ -70,7 +71,8 @@ environment variables.
 ## CLI
 
 ```bash
-brew install pessini/tap/litedrop
+brew tap pessini/tap
+brew install litedrop
 
 litedrop login --url http://localhost:8080
 litedrop push report.html

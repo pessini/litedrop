@@ -5,15 +5,15 @@ Share Markdown or HTML files through a litedrop server and print the public URL.
 ## Install With Homebrew
 
 ```bash
-brew install pessini/tap/litedrop
+brew tap pessini/tap
+brew install litedrop
 litedrop --help
 ```
 
-Or add the tap first:
+Or install directly from the tap without adding it first:
 
 ```bash
-brew tap pessini/tap
-brew install litedrop
+brew install pessini/tap/litedrop
 litedrop --help
 ```
 
