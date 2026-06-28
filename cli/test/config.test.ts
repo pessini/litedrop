@@ -100,7 +100,7 @@ test("the file is used when env is unset; default base applies with no config", 
   saveFileConfig({ api_key: "from_file" });
   const cfg = resolveConfig();
   assert.equal(cfg.apiKey, "from_file");
-  assert.equal(cfg.baseUrl, "http://localhost:8080");
+  assert.equal(cfg.baseUrl, "https://app.litedrop.dev");
 });
 
 test("requireKey throws an auth-coded CliError when no key resolves", () => {
