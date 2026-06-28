@@ -71,7 +71,15 @@ jobs:
 
       - run: npm ci
       - run: npm --version
-      - run: npm publish -w @litedrop/cli --access public --provenance
+      - name: Publish package if needed
+        run: |
+          version="$(node -p "require('./cli/package.json').version")"
+          if npm view "@litedrop/cli@${version}" version >/dev/null 2>&1; then
+            echo "@litedrop/cli@${version} is already published."
+            exit 0
+          fi
+
+          npm publish -w @litedrop/cli --access public --provenance
 
   release-binaries:
     name: Release standalone binaries
@@ -117,6 +125,9 @@ jobs:
     name: Update Homebrew tap
     needs: publish-npm
     runs-on: ubuntu-latest
+    concurrency:
+      group: homebrew-tap-litedrop-formula
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
         with:
@@ -169,6 +180,24 @@ jobs:
 
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/pessini/homebrew-tap.git" tap
           cd tap
+
+          current_version="$(ruby -ne 'puts $1 if %r{/@litedrop/cli/-/cli-([0-9]+\.[0-9]+\.[0-9]+)\.tgz}.match($_)' Formula/litedrop.rb)"
+          if [ -n "$current_version" ]; then
+            if node - "$current_version" "$VERSION" <<'NODE'
+          const current = process.argv[2].split(".").map(Number);
+          const next = process.argv[3].split(".").map(Number);
+
+          for (let i = 0; i < 3; i += 1) {
+            if (current[i] > next[i]) process.exit(0);
+            if (current[i] < next[i]) process.exit(1);
+          }
+          process.exit(0);
+          NODE
+            then
+              echo "Homebrew formula is already at ${current_version}; skipping stale update to ${VERSION}."
+              exit 0
+            fi
+          fi
 
           ruby -i -pe 'gsub(%r{url "https://registry\.npmjs\.org/@litedrop/cli/-/cli-[^"]+\.tgz"}, "url \"#{ENV.fetch("TARBALL")}\"")' Formula/litedrop.rb
           ruby -i -pe 'gsub(/sha256 "[0-9a-f]{64}"/, "sha256 \"#{ENV.fetch("SHA256")}\"")' Formula/litedrop.rb
