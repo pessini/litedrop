@@ -16,7 +16,22 @@ storage, with optional S3, R2, or Azure blob storage.
 
 ## Quick Start
 
-Run locally with no Docker and no external services:
+Run locally with Docker and no domain:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e ADMIN_PASSWORD=change-me-please \
+  -e LITEDROP_TOKEN=dev-token-change-me-please \
+  -e ALLOW_SAME_ORIGIN_CONTENT=true \
+  -v litedrop-db:/app/apps/backend/.data \
+  -v litedrop-blobs:/app/apps/backend/.storage \
+  pessini/litedrop:latest
+```
+
+Open `http://localhost:8080`. If you map a different host port, set
+`APP_BASE_URL`, for example `APP_BASE_URL=http://localhost:3000`.
+
+Or run locally from source:
 
 ```bash
 npm install
@@ -38,10 +53,9 @@ Using the hosted service at [litedrop.dev](https://litedrop.dev)? Skip the local
 server and just run `litedrop login` (no `--url` needed) with the token from your
 account — the CLI targets the hosted service by default.
 
-For production, build one container and put a TLS proxy in front:
+For production, pull the published container and put a TLS proxy in front:
 
 ```bash
-docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
@@ -50,7 +64,7 @@ docker run -p 8080:8080 \
   -e CONTENT_BASE_URL=https://content.example.com \
   -v litedrop-db:/app/apps/backend/.data \
   -v litedrop-blobs:/app/apps/backend/.storage \
-  litedrop
+  pessini/litedrop:latest
 ```
 
 See [SELF_HOSTING.md](SELF_HOSTING.md) for DNS, TLS, volumes, backups, and all

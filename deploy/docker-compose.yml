@@ -2,7 +2,7 @@
 #
 #   cd deploy
 #   cp .env.example .env   # set DOMAIN + ADMIN_PASSWORD, point DNS at this box
-#   docker compose up -d --build
+#   docker compose up -d
 #
 # Caddy obtains/renews Let's Encrypt certificates for the hostnames and
 # proxies them to the app. The app serves everything (API, share pages,
@@ -15,9 +15,7 @@
 
 services:
   litedrop:
-    build:
-      context: ..
-      dockerfile: apps/backend/Dockerfile
+    image: pessini/litedrop:${LITEDROP_IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       APP_BASE_URL: https://${DOMAIN:?set DOMAIN in deploy/.env}

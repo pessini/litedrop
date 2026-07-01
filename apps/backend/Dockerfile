@@ -50,6 +50,8 @@ COPY --from=build /app/apps/backend/src/db/migrations ./apps/backend/src/db/migr
 COPY --from=build /app/apps/dashboard/dist ./apps/dashboard/dist
 COPY apps/backend/package.json ./apps/backend/
 COPY package.json ./
+RUN mkdir -p /app/apps/backend/.data /app/apps/backend/.storage \
+  && chown -R node:node /app/apps/backend/.data /app/apps/backend/.storage
 WORKDIR /app/apps/backend
 EXPOSE 8080
 # Embedded SQLite (the default DATABASE_URL) and local blob storage live here —
@@ -57,4 +59,6 @@ EXPOSE 8080
 #   docker run -v litedrop-db:/app/apps/backend/.data -v litedrop-blobs:/app/apps/backend/.storage …
 VOLUME /app/apps/backend/.data
 VOLUME /app/apps/backend/.storage
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "const port = process.env.PORT || 8080; fetch('http://127.0.0.1:' + port + '/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1));"
 CMD ["node", "dist/index.js"]

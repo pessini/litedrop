@@ -10,6 +10,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  DOCKER_IMAGE: pessini/litedrop
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -30,3 +33,81 @@ jobs:
       - run: npm publish -w @pessini/litedrop-core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-image:
+    name: Publish Docker image
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate release tag
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Docker releases require a tag like v0.1.2; got ${GITHUB_REF_NAME}." >&2
+            exit 1
+          fi
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+
+      - name: Build image for smoke test
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          load: true
+          tags: litedrop:smoke
+
+      - name: Smoke test image
+        run: |
+          docker run -d --name litedrop-smoke -p 8080:8080 \
+            -e ADMIN_PASSWORD=change-me-please \
+            -e LITEDROP_TOKEN=dev-token-change-me-please \
+            -e ALLOW_SAME_ORIGIN_CONTENT=true \
+            litedrop:smoke
+
+          trap 'docker logs litedrop-smoke; docker rm -f litedrop-smoke' EXIT
+
+          for _ in {1..60}; do
+            if curl -fsS http://localhost:8080/healthz; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          exit 1
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
