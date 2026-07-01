@@ -20,10 +20,40 @@ Requirements:
   Node 24 LTS is recommended. The Node 22.18 floor is for native TypeScript
   stripping used by dev/test scripts. Docker Compose v2 is needed only for
   `deploy/`.
-- A domain pointed at the server.
-- Recommended: separate app, share, and content hostnames.
+- No domain is needed for local Docker testing.
+- For production: a domain pointed at the server.
+- Recommended for production: separate app, share, and content hostnames.
 - The published `@litedrop/cli` package requires Node.js 22.19+ on the client
   machine. The standalone CLI binary does not require Node.js.
+
+## Try Locally With Docker
+
+Pull the published image and run it on localhost:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e ADMIN_PASSWORD=change-me-please \
+  -e LITEDROP_TOKEN=dev-token-change-me-please \
+  -e ALLOW_SAME_ORIGIN_CONTENT=true \
+  -v litedrop-db:/app/apps/backend/.data \
+  -v litedrop-blobs:/app/apps/backend/.storage \
+  pessini/litedrop:latest
+```
+
+Open `http://localhost:8080`. `APP_BASE_URL` defaults to that URL, so share
+links work locally with no domain. If you map another host port, set the public
+URL explicitly:
+
+```bash
+docker run --rm -p 3000:8080 \
+  -e ADMIN_PASSWORD=change-me-please \
+  -e LITEDROP_TOKEN=dev-token-change-me-please \
+  -e ALLOW_SAME_ORIGIN_CONTENT=true \
+  -e APP_BASE_URL=http://localhost:3000 \
+  -v litedrop-db:/app/apps/backend/.data \
+  -v litedrop-blobs:/app/apps/backend/.storage \
+  pessini/litedrop:latest
+```
 
 ## VPS With Caddy
 
@@ -33,11 +63,11 @@ defaults are `s.$DOMAIN` and `content.$DOMAIN`; if you set `SHARE_DOMAIN` or
 `CONTENT_DOMAIN`, point those hostnames instead.
 
 ```bash
-git clone https://github.com/<you>/litedrop
+git clone https://github.com/pessini/litedrop
 cd litedrop/deploy
 cp .env.example .env
 # edit .env: set DOMAIN, ADMIN_PASSWORD, and LITEDROP_TOKEN
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open `https://app.example.com` and sign in with `ADMIN_PASSWORD`. Caddy handles
@@ -46,11 +76,10 @@ volumes, so `docker compose down` and upgrades keep your data.
 
 ## Existing Proxy or Platform
 
-Build the app image from the repository root and route your proxy or platform to
-container port 8080:
+Pull the published app image and route your proxy or platform to container port
+8080:
 
 ```bash
-docker build -f apps/backend/Dockerfile -t litedrop .
 docker run -d -p 8080:8080 \
   -e ADMIN_PASSWORD=change-me-please \
   -e LITEDROP_TOKEN=$(openssl rand -hex 32) \
@@ -60,7 +89,7 @@ docker run -d -p 8080:8080 \
   -e TRUST_PROXY_HEADERS=true \
   -v litedrop-db:/app/apps/backend/.data \
   -v litedrop-blobs:/app/apps/backend/.storage \
-  litedrop
+  pessini/litedrop:latest
 ```
 
 Proxy checklist:
@@ -200,7 +229,8 @@ Upgrade the bundled Caddy stack from `deploy/`:
 
 ```bash
 git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 SQLite schema migrations run automatically at boot.
